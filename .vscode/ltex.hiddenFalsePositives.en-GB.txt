@@ -1,0 +1,14 @@
+{"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Qchizuru4rogue: Deep Reinforcement Learning for Dungeon Crawling Project Proposal Dylan G. Drescher November 2022\\E$"}
+{"rule":"EN_UNPAIRED_BRACKETS","sentence":"^\\QIf the player never engages in combat with enemies, the player's “experience level\" will never increase, as killing enemies grants “experience points\".\\E$"}
+{"rule":"MORFOLOGIK_RULE_EN_GB","sentence":"^\\Q\"AlphaGo\" howpublished=\\E$"}
+{"rule":"MORFOLOGIK_RULE_EN_GB","sentence":"^\\Q\"AlphaGo\" howpublished=\"https://www.deepmind.com/research/highlighted-research/alphago\"\\E$"}
+{"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Qchizuru4rogue is a computer program designed to play the beloved video game Rogue.\\E$"}
+{"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Qchizuru4rogue: Deep Reinforcement Learning for Dungeon Crawling Dylan G. Drescher May 2023\\E$"}
+{"rule":"MORFOLOGIK_RULE_EN_GB","sentence":"^\\QTo accomplish this project, I will need to contact the University of Bath HPC Support Team to be granted access the University's Balena supercomputing environments.\\E$"}
+{"rule":"MORFOLOGIK_RULE_EN_GB","sentence":"^\\QTo accomplish this project, I will need to contact the HPC departmental champion, James Davenport, to be granted access the University's Balena supercomputing environments.\\E$"}
+{"rule":"MORFOLOGIK_RULE_EN_GB","sentence":"^\\QRogue is a game that belongs to a genre called “roguelikes\".\\E$"}
+{"rule":"MORFOLOGIK_RULE_EN_GB","sentence":"^\\QRogue is a computer game that belongs to a genre called “roguelikes\".\\E$"}
+{"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Qchizuru4rogue is a computer program designed to play the revered video game Rogue.\\E$"}
+{"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Qchizuru4rogue: Deep Reinforcement Learning for Deep Dungeon Crawling Dylan G. Drescher B.Sc. Computer Science - University of Bath May 2023\\E$"}
+{"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Qchizuru4rogue: Deep Reinforcement Learning for Dungeon Crawling Literature, Technology and Data Survey Dylan G. Drescher November 2022\\E$"}
+{"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Qchizuru4rogue: Deep Reinforcement Learning for Dungeon Crawling Literature, Technology and Data Survey Dylan G. Drescher December 2022\\E$"}

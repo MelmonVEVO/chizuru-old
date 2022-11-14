@@ -1,0 +1,57 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{natbib}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\graphicspath{ {./img/} }
+
+\begin{document}
+\title{chizuru4rogue: Deep Reinforcement Learning for Deep Dungeon Crawling}
+\author{Dylan G. Drescher \\[1ex] B.Sc. Computer Science - University of Bath}
+\date{May 2023}
+\maketitle
+
+\begin{abstract}
+    chizuru4rogue is a computer program designed to play the revered video game Rogue. It is designed to use all the information at its disposal to determine the next best move in order to push further and win the game.
+\end{abstract}
+
+\setcounter{page}{0}
+\thispagestyle{empty}
+\newpage
+
+\section*{Copyright}
+Attention is drawn to the fact that copyright of this dissertation rests with its author. The Intellectual Property Rights of the products produced as part of the project belong to the author unless otherwise specified below, in accordance with the University of Bath's policy on intellectual property (see \href{https://www.bath.ac.uk/publications/university-ordinances/attachments/Ordinances_1_October_2020.pdf}{here}). This copy of the dissertation has been supplied on condition that anyone who consults it is understood to recognise that its copyright rests with its author and that no quotation from the dissertation and no information derived from it may be published without the prior written consent of the author.
+
+\section*{Declaration}
+This dissertation is submitted to the University of Bath in accordance with the requirements of the degree of Bachelor of Science in the Department of Computer Science. No portion of the work in this dissertation has been submitted in support of an application for any other degree or qualification of this or any other university or institution of learning. Except where specifically acknowledged, it is the work of the author.
+
+\newpage
+
+\section{Introduction}
+
+\section{Rogue}
+
+\section{Research}
+
+\section{Design}
+A player interacts with Rogue through the keyboard alone. The game is turn-based, so the agent interacts with the game every time they may perform an action on their turn. When it is the agent's turn, the agent receives an encapsulation of the data a human can observe, henceforth known as the ``observation state''. The agent then returns a keystroke that they wish to use as their action, as every action in Rogue is performed with a keystroke.
+
+As the game is terminal based, parsing each pixel is unnecessary, what we do instead is take each cell and what letter they currently are as input.
+
+\subsection{Policy Optimisation}
+Our goal was to find an optimal policy that maximises the chance that the agent can successfully reach the 26th dungeon level and get the Amulet of Yendor.
+
+\section{Development and code}
+
+\section{Agent Training and Observations}
+
+\section{Reflection}
+
+\section{Conclusion}
+
+\medskip
+
+\bibliographystyle{agsm}
+\bibliography{diss}
+
+\end{document}
