@@ -12,3 +12,7 @@
 {"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Qchizuru4rogue: Deep Reinforcement Learning for Deep Dungeon Crawling Dylan G. Drescher B.Sc. Computer Science - University of Bath May 2023\\E$"}
 {"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Qchizuru4rogue: Deep Reinforcement Learning for Dungeon Crawling Literature, Technology and Data Survey Dylan G. Drescher November 2022\\E$"}
 {"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Qchizuru4rogue: Deep Reinforcement Learning for Dungeon Crawling Literature, Technology and Data Survey Dylan G. Drescher December 2022\\E$"}
+{"rule":"EN_COMPOUNDS","sentence":"^\\Q\"Grandmaster level in StarCraft II using multi-agent reinforcement learning\"\\E$"}
+{"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Qchizuru4rogue: Deep Learning for Deep Dungeon Crawling Dylan G. Drescher B.Sc. Computer Science - University of Bath May 2023\\E$"}
+{"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Qchizuru4rogue: Deep Learning for Deep Dungeon Crawling Dylan G. Drescher B.Sc. Computer Science - University of Bath 2022 - 2023\\E$"}
+{"rule":"MORFOLOGIK_RULE_EN_GB","sentence":"^\\Qchizuru4rogue: Deep Learning for Deep Dungeoneering Dylan G. Drescher B.Sc. Computer Science - University of Bath 2022 - 2023\\E$"}

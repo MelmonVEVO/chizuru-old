@@ -6,18 +6,21 @@
 \graphicspath{ {./img/} }
 
 \begin{document}
-\title{chizuru4rogue: Deep Reinforcement Learning for Deep Dungeon Crawling}
+\title{chizuru4rogue: Deep Learning for Deep Dungeon Crawling}
 \author{Dylan G. Drescher \\[1ex] B.Sc. Computer Science - University of Bath}
-\date{May 2023}
+\date{2022 - 2023}
 \maketitle
 
 \begin{abstract}
-    chizuru4rogue is a computer program designed to play the revered video game Rogue. It is designed to use all the information at its disposal to determine the next best move in order to push further and win the game.
+    In this article we introduce chizuru4rogue, which is a computer program designed to play the revered video game Rogue. It is designed to use all the information at its disposal to determine the next best move in order to push further and win the game.
 \end{abstract}
 
 \setcounter{page}{0}
 \thispagestyle{empty}
+
 \newpage
+
+\pagenumbering{roman}
 
 \section*{Copyright}
 Attention is drawn to the fact that copyright of this dissertation rests with its author. The Intellectual Property Rights of the products produced as part of the project belong to the author unless otherwise specified below, in accordance with the University of Bath's policy on intellectual property (see \href{https://www.bath.ac.uk/publications/university-ordinances/attachments/Ordinances_1_October_2020.pdf}{here}). This copy of the dissertation has been supplied on condition that anyone who consults it is understood to recognise that its copyright rests with its author and that no quotation from the dissertation and no information derived from it may be published without the prior written consent of the author.
@@ -27,23 +30,66 @@ This dissertation is submitted to the University of Bath in accordance with the 
 
 \newpage
 
+\tableofcontents
+\listoffigures
+\listoftables
+
+\newpage
+
+\begin{center}
+    \section*{Acknowledgements}
+
+    I would like to express my sincere gratitude to the following people:
+
+    \vspace{3mm}
+
+    \emph{Dr. Jie Zhang}
+    
+    My project supervisor, for providing me with invaluable guidance and feedback on my dissertation throughout the year.
+
+    \vspace{3mm}
+
+    \emph{Mr. Raphael and Mrs. Christine Drescher}
+    
+    My parents, for always encouraging me to strive for the best and never doubting my ability.
+\end{center}
+
+\newpage
+
+\pagenumbering{arabic}
+
 \section{Introduction}
 
-\section{Rogue}
+\section{Literature Review}
 
-\section{Research}
+\section{Rogue}
+From here, a ``run'' refers to a single Rogue gameplay session from start to end.
 
 \section{Design}
 A player interacts with Rogue through the keyboard alone. The game is turn-based, so the agent interacts with the game every time they may perform an action on their turn. When it is the agent's turn, the agent receives an encapsulation of the data a human can observe, henceforth known as the ``observation state''. The agent then returns a keystroke that they wish to use as their action, as every action in Rogue is performed with a keystroke.
 
 As the game is terminal based, parsing each pixel is unnecessary, what we do instead is take each cell and what letter they currently are as input.
 
+As Rogue is a complex environment, chizuru4rogue will utilise a combination of reinforcement learning algorithms.
+
+Rogue is a partially observable Markov Decision Process. To deal with this, we use a Long Short-term Memory system, an extension of a feedforward neural network, to process the sequence of observations. This is because LSTMs are capable of ``remembering'' information for longer periods of time. The LSTM algorithm was first defined by \cite{hochreiter97} and popularised much later, one example of an agent implementing a LSTM including AlphaStar by \cite{vinyals19}.
+
+The goal of chizuru4rogue is to maximise the final score that the agent gets within one run. A run's final score is used as the reward for the reinforcement learning methods within the agent. A run's final score is determined by how much gold a player collects. The deeper a player ventures in the dungeon, the more gold they can collect. Additionally, the player gains a large score bonus if the game ends while the player possesses the Amulet of Yendor, an item found in dungeon level 26.
+
+We use a combination of supervised learning and self-play. During the supervised learning portion of the learning process, we provide a combination of replays from humans and Rog-o-Matic (\cite{mauldin83}), an expert system that plays Rogue to a human level. During the self-play portion of the learning process, chizuru4rogue will play thousands of runs using Rogueinabox (\cite{asperti17}) as an interface to receive game state and send actions.
+
+Using only reinforcement learning is challenging, mainly due to the large action space that Rogue provides. Unlike most other video games where the actions you can perform is contextual, Rogue is a game where every single command is available to you at all times. This allows the player to develop a wide variety of strategies, but increases the overall complexity of the game. Additionally, some commands are combined with selecting an item from the player's inventory e.g. ``wear chain mail armour'', increasing the size of the action space in different contexts.
+
+
+
 \subsection{Policy Optimisation}
 Our goal was to find an optimal policy that maximises the chance that the agent can successfully reach the 26th dungeon level and get the Amulet of Yendor.
 
-\section{Development and code}
+\section{Requirements Specification}
 
-\section{Agent Training and Observations}
+\section{Implementation}
+
+\section{Agent Training and Investigation}
 
 \section{Reflection}
 
