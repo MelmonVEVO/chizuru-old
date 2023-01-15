@@ -16,3 +16,4 @@
 {"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Qchizuru4rogue: Deep Learning for Deep Dungeon Crawling Dylan G. Drescher B.Sc. Computer Science - University of Bath May 2023\\E$"}
 {"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Qchizuru4rogue: Deep Learning for Deep Dungeon Crawling Dylan G. Drescher B.Sc. Computer Science - University of Bath 2022 - 2023\\E$"}
 {"rule":"MORFOLOGIK_RULE_EN_GB","sentence":"^\\Qchizuru4rogue: Deep Learning for Deep Dungeoneering Dylan G. Drescher B.Sc. Computer Science - University of Bath 2022 - 2023\\E$"}
+{"rule":"MORFOLOGIK_RULE_EN_GB","sentence":"^\\QNetHack is another roguelike that has been explored in SkillHack (\\E(?:Dummy|Ina|Jimmy-)[0-9]+\\Q)\\E$"}

@@ -19,3 +19,7 @@ StarCraft
 Mnih
 Dota
 Jie
+roguelikes
+dilligent
+Cortesi
+SkillHack
