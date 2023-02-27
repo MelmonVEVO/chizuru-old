@@ -4,6 +4,17 @@
 
 import tensorflow as tf
 
+import matplotlib.pyplot as plt
+
+# Helper functions
+def cnn_layer():
+    return tf.keras.layers.Conv2D(
+        50,
+        (3, 3),
+        activation="relu",
+
+    )
+
 
 class Chizuru:
     def __init__(self):

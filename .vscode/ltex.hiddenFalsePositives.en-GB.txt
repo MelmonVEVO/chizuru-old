@@ -17,3 +17,10 @@
 {"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Qchizuru4rogue: Deep Learning for Deep Dungeon Crawling Dylan G. Drescher B.Sc. Computer Science - University of Bath 2022 - 2023\\E$"}
 {"rule":"MORFOLOGIK_RULE_EN_GB","sentence":"^\\Qchizuru4rogue: Deep Learning for Deep Dungeoneering Dylan G. Drescher B.Sc. Computer Science - University of Bath 2022 - 2023\\E$"}
 {"rule":"MORFOLOGIK_RULE_EN_GB","sentence":"^\\QNetHack is another roguelike that has been explored in SkillHack (\\E(?:Dummy|Ina|Jimmy-)[0-9]+\\Q)\\E$"}
+{"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Qchizuru4rouge utilises\\E$"}
+{"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Qchizuru4rouge utilises a *** to explore levels in Rogue, collect gold and reach the goal.\\E$"}
+{"rule":"MORFOLOGIK_RULE_EN_GB","sentence":"^\\Q2021 IEEE Conference on Games (CoG)\\E$"}
+{"rule":"DT_PRP","sentence":"^\\QThe player may see what the mapping is by viewing their inventory with the I key.\\E$"}
+{"rule":"DT_PRP","sentence":"^\\QThe player may see what the mapping is by viewing their inventory with the I key during the game.\\E$"}
+{"rule":"DT_PRP","sentence":"^\\QAdditionally, the player may see what the item to keyboard mapping is by viewing their inventory with the I key during the game.\\E$"}
+{"rule":"I_LOWERCASE","sentence":"^\\QAdditionally, the player may see what the item to keyboard mapping is by viewing their inventory with the i key during the game.\\E$"}
