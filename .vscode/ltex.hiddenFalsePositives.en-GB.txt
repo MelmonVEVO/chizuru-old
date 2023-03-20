@@ -24,3 +24,6 @@
 {"rule":"DT_PRP","sentence":"^\\QThe player may see what the mapping is by viewing their inventory with the I key during the game.\\E$"}
 {"rule":"DT_PRP","sentence":"^\\QAdditionally, the player may see what the item to keyboard mapping is by viewing their inventory with the I key during the game.\\E$"}
 {"rule":"I_LOWERCASE","sentence":"^\\QAdditionally, the player may see what the item to keyboard mapping is by viewing their inventory with the i key during the game.\\E$"}
+{"rule":"PHRASE_REPETITION","sentence":"^\\QWe use as input The player's status - HP, strength, EXP and other attributes The game map, a 21 x 79 array of ASCII characters A 7 x 7 crop of the map centred around the player The player's inventory The items the player is equipped with\\E$"}
+{"rule":"PHRASE_REPETITION","sentence":"^\\QWe use the following information to represent game state: The player's status - HP, strength, EXP and other attributes The game map, a 21 x 79 array of ASCII characters A 7 x 7 crop of the map centred around the player The player's inventory The items the player is equipped with\\E$"}
+{"rule":"I_LOWERCASE","sentence":"^\\QAdditionally, the player may see what the item to keyboard mapping is by viewing their inventory with the i key at any other point during the game.\\E$"}
