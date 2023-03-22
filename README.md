@@ -1,6 +1,7 @@
-# Chizuru
-Hoo boy.
+![I LOVE ROGUE](LOVEIT.png)
 
+# Chizuru
+## Setup
 This thing is designed to run in a Docker container. To do that, run these:
 ```shell
 docker build -t chizuru .
@@ -12,6 +13,9 @@ If this thing is located on Hex (the uni gpu cloud), run these:
 hare build -t <username>/chizuru .
 hare run
 ```
+
+## Bugs
+Probably infinite.
 
 ## Licence
 This program is governed under the GNU General Public Licence v3.0.
