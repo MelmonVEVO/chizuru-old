@@ -2,6 +2,7 @@
 
 """This file contains the Chizuru class, a Rogue playing agent."""
 import os
+
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
@@ -53,11 +54,9 @@ def create_model():
     map_net = tf.keras.layers.Conv2D(64, (3, 3), activation="relu")(map_net)
 
     crop_net = tf.keras.layers.Embedding(ASCII_CHARNUM, 64, input_length=9 * 9)(crop_input)
-    crop_net = tf.keras.layers.Conv2D(32, (3, 3), activation="relu", input_shape=(9, 9))(crop_net)
+    crop_net = tf.keras.layers.Conv2D(64, (3, 3), activation="relu", input_shape=(9, 9))(crop_net)
     crop_net = tf.keras.layers.MaxPooling2D((2, 2))(crop_net)
-    crop_net = tf.keras.layers.Conv2D(64, (3, 3), activation="relu")(crop_net)
-    crop_net = tf.keras.layers.MaxPooling2D((2, 2))(crop_net)
-    crop_net = tf.keras.layers.Conv2D(64, (3, 3), activation="relu")(crop_net)
+    crop_net = tf.keras.layers.Conv2D(32, (3, 3), activation="relu")(crop_net)
 
     collected = tf.keras.layers.Concatenate()([status_net, inv_net, equip_net, map_net, crop_net])
 
@@ -75,7 +74,7 @@ def create_model():
 
     output = tf.keras.layers.Dense(10)(final_mlp)
 
-    final_model = keras.Model(
+    final_model = tf.keras.Model(
         inputs=[status_input,
                 inv_input,
                 equip_input,
@@ -93,25 +92,20 @@ def create_model():
     return final_model
 
 
-def get_crop():
+def get_crop(map):
     pass
 
 
-def save_checkpoint(model_sv: tf.keras.Model):
-    pass
+def save_checkpoint(model_sv: tf.keras.Model, epoch):
+    model_sv.save_weights(CKPT_PATH.format(epoch=epoch))
 
 
 def load_checkpoint(model_ld: tf.keras.Model):
     model_ld.load_weights(CKPT_PATH)
 
 
-def save_agent(model_sv: tf.keras.Model, filename="czr.h5"):
-    pass
-
-
-def load_agent(filename="czr.h5"):
-    pass
-
-
 if __name__ == "__main__":
     model = create_model()
+    tf.keras.utils.plot_model(model, "stuff.png", show_shapes=True)
+
+# †昇天†

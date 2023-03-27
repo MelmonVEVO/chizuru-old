@@ -1,0 +1,8 @@
+\citet{jon90}               ⇒ Jones et al. (1990)
+\citet[chap.~2]{jon90}      ⇒ Jones et al. (1990, chap. 2)
+\citep{jon90}               ⇒ (Jones et al., 1990)
+\citep[chap.~2]{jon90}      ⇒ (Jones et al., 1990, chap. 2)
+\citep[see][]{jon90}        ⇒ (see Jones et al., 1990)
+\citep[see][chap.~2]{jon90} ⇒ (see Jones et al., 1990, chap. 2)
+\citet*{jon90}              ⇒ Jones, Baker, and Williams (1990)
+\citep*{jon90}              ⇒ (Jones, Baker, and Williams, 1990)
