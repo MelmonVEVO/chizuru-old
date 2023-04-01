@@ -13,7 +13,7 @@
 
 \begin{document}
     \title{chizuru-rogue: Deep Learning for Dungeon Crawling}
-    \author{Dylan G. Drescher \\[1ex] B.Sc. Computer Science - University of Bath}
+    \author{Dylan G. Drescher\\[1ex]Supervisor: Dr. Jie Zhang\\[1ex]B.Sc. Computer Science - University of Bath}
     \date{2022 - 2023}
     \maketitle
 
@@ -31,7 +31,7 @@
 
     \newpage
 
-    CHIZURU-ROGUE
+    \textbf{CHIZURU-ROGUE}
 
     submitted by Dylan G. Drescher
 
@@ -48,9 +48,12 @@
     \newpage
 
     \begin{abstract}
+        Video games is one of the most popular problem domains to tackle with reinforcement learning due to the interesting complexity that can arise from simple sets of rules that many games provide.
+        By training reinforcement learning models on video games and proving they are effective at solving problems, they can then be repurposed for other problems such as self-driving cars and healthcare.
+
         In this article we introduce chizuru-rogue, which is a computer program designed to play the video game Rogue, a famous role-playing game that inspired the creation of the ``roguelike'' video game genre.
-        Rogue offers a unique problem to solve, requiring a player to solve a partially observable, randomly generated levels.
-        chizuru-rouge utilises a customised neural network that involves an LSTM to explore levels in Rogue, collect gold and reach the goal.
+        Rogue offers a unique problem to solve, requiring a player to solve partially observable, randomly generated levels.
+        chizuru-rouge utilises a customised neural network that involves an LSTM for long-term and short-term memory to explore levels in Rogue, collect gold and reach the goal of collecting the Amulet of Yendor.
 
         TensorFlow will be used as a framework to implement the reinforcement learning agent.
         TensorFlow is a Python library that provides tools to streamline development of deep learning models.
@@ -84,7 +87,7 @@
 
         % \vspace{5mm}
 
-        % This dissertation made use of Hex, the GPU Cloud in the Department of Computer Science at the University of Bath.
+        % This project made use of Hex, the GPU Cloud in the Department of Computer Science at the University of Bath.
     \end{center}
 
     \newpage
@@ -166,7 +169,7 @@
     Roguelike games are mainly characterised by challenging, turn based hack and slash gameplay, procedurally generated levels and permanent character death.
 
     \subsubsection{Objective}\label{subsubsec:objective}
-    In Rogue, your objective is to descend the Dungeon of Doom to slay monsters, collect gold coins, retrieve the Amulet of Yendor and escape the dungeon with it alive.
+    In Rogue, your main objective is to get a high score by descending the Dungeon of Doom to slay monsters, collect gold coins, retrieve the Amulet of Yendor and escape the dungeon with it alive.
     The game is turn based, which means the player can spend as long as they want thinking their next move before the game processes the environment.
     Figure~\ref{fig:rogsc} depicts an example screenshot of the game.
 
@@ -179,8 +182,9 @@
 
     \subsubsection{Environment}\label{subsubsec:environment}
 
-    Every floor of the dungeon is a randomly generated level consisting of several rooms connected with corridors.
+    Every floor of the dungeon is a randomly generated maze consisting of several rooms connected with corridors.
     Rooms sometimes generate empty, but they may also generate populated with several items or enemies.
+    One of the rooms will contain the stairs that will let the player descend the dungeon, represented with the character \texttt{\%}.
     When the player starts a new run, the player is placed in dungeon level 1 with some food, a mace, basic armour, a bow and arrows.
 
     Rogue's environment is partially observable.
@@ -272,9 +276,15 @@
     \subsection{Policy Optimisation}\label{subsec:policy-optimisation}
 
     \subsection{Neural Network}\label{subsec:neural-network}
+    The neural network processes the inputs in a separate subnetwork, which is then concatenated, fed through an LSTM, and a multilayer perceptron network to produce the final output.
+    Figure~\ref{fig:netwk} visually shows the structure of the Chizuru neural network.
 
-
-
+    \begin{figure}[t]
+        \caption{The structure of the Chizuru neural network *OUTDATED.} % TODO outdated
+        \centering
+        \includegraphics[scale=0.5]{network_structure}
+        \label{fig:netwk}
+    \end{figure}
 
     \section{Implementation}\label{sec:implementation}
 
@@ -315,12 +325,20 @@
     \medskip
 
     \appendix
-    \section{Methods}
-    \subsection{Neural Network}
-    \subsection{State Representation}
-    \subsection{Reward Representation}
-    \subsection{Hyperparameters}
-    \section{Results}
-    \section{Data}
+    \section{Methods}\label{sec:methods}
+
+    \subsection{Neural Network}\label{subsec:neural-network2}
+
+    \subsection{State Representation}\label{subsec:state-representation}
+
+    \subsection{Reward Representation}\label{subsec:reward-representation}
+
+    \subsection{Hyperparameters}\label{subsec:hyperparameters}
+
+
+    \section{Results}\label{sec:results}
+
+
+    \section{Data}\label{sec:data}
 
 \end{document}
