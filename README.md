@@ -4,7 +4,7 @@
 Chizuru is an AI that plays the 1980 computer game Rogue.
 While this repository contains the code for the AI, it also contains the dissertation released alongside this code in `writeup/`.
 
-You can learn more about Rogue on the [NetHack Wiki page](https://nethackwiki.com/wiki/Rogue_(game)) about it.
+You can learn more about Rogue, its history and the way it plays on [this webpage](https://nethackwiki.com/wiki/Rogue_(game)).
 
 ## Setup
 This thing is designed to run in a Docker container. To do that, run these:
@@ -12,16 +12,18 @@ This thing is designed to run in a Docker container. To do that, run these:
 docker build -t chizuru .
 docker run
 ```
-After that, it should be "smooth" sailing.
+After that, it should be smooth sailing.
 
 ## Files
-Chizuru saves its training checkpoints to `czr-xxxx.ckpt` where `xxxx` is the epoch number.
+The model is located in `chizuru.py`. The training file and logic is written in `train.py`, and the code for previewing how the AI plays is located in `preview.py`. Seeing is believing, after all.
+
+Chizuru saves its training checkpoints to `training/czr-xxxx.ckpt` where `xxxx` is the epoch number. It saves a new checkpoint every 5 epochs.
 
 ## Bugs
-Probably infinite (although countably infinite). However, the distant screams of your PC running this model is *not* a bug. It's a feature.
+Probably infinite (although countably infinite). However, the distant screams of your PC and/or GPU cloud running this model is *not* a bug. It's a feature.
 
 ## Licence
-This program is released under the GNU General Public Licence v3.0.
+This program is released under the GNU General Public Licence v3.0, except for the writeup, which is copyrighted.
 
 You should have received a copy of the GNU General Public Licence
 along with this program. If not, see <https://www.gnu.org/licenses/>.

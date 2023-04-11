@@ -160,7 +160,6 @@ cython_debug/
 #.idea/
 
 .DS_Store
-.ipynb_checkpoints
 node_modules
 /.bazelrc.user
 /.tf_configure.bazelrc
@@ -218,10 +217,8 @@ docker/docker
 .*.swp
 a.out
 *.orig
-.idea
 build_src
 .flymake*
-.DS_Store
 docs/_build
 docs/_static
 docs/_templates
@@ -238,7 +235,6 @@ Vagrantfile
 ## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof
-*.log
 *.lot
 *.fls
 *.out
@@ -507,9 +503,6 @@ TSWLatexianTemp*
 # Kile
 *.backup
 
-# gummi
-.*.swp
-
 # KBibTeX
 *~[0-9]*
 
@@ -539,3 +532,5 @@ TSWLatexianTemp*
 # option is specified. Footnotes are the stored in a file with suffix Notes.bib.
 # Uncomment the next line to have this generated file ignored.
 #*Notes.bib
+
+training/
