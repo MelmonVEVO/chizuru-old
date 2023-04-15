@@ -20,31 +20,15 @@
 import os
 import tensorflow as tf
 
+# Constants
 ASCII_CHARNUM = 128
 ENVIRONMENT = "rogueinabox"
 LOG_INTERVAL = 200
-
 CKPT_PATH = "training/czr-{epoch:04d}.ckpt"
 CKPT_DIR = os.path.dirname(CKPT_PATH)
 
-# Hyperparameters
-NUM_ITERATIONS = 20000
-BATCH_SIZE = 64
-ALPHA = 1.0e-3
-BETA1 = 0.9
-BETA2 = 0.999
-EPSILON = 1.0e-8
-DECAY = 0.0
 
-CKPT_CALLBACK = tf.keras.callbacks.ModelCheckpoint(
-    filepath=CKPT_PATH,
-    save_weights_only=True,
-    verbose=1,
-    save_freq=5*BATCH_SIZE
-)
-
-
-def create_model():
+def create_model() -> tf.keras.Model:
     """Instantiates, compiles and returns the Chizuru model."""
     status_input = tf.keras.Input(shape=(64,))
     inv_input = tf.keras.Input(shape=(64,))
@@ -52,45 +36,39 @@ def create_model():
     map_input = tf.keras.Input(shape=(21, 79), dtype=tf.int32)
     crop_input = tf.keras.Input(shape=(9, 9), dtype=tf.int32)
 
-    status_net = tf.keras.layers.Embedding(ASCII_CHARNUM, 32)(status_input)
-    status_net = tf.keras.layers.Dense(32, activation="relu")(status_net)
-    status_net = tf.keras.layers.Dense(32, activation="relu")(status_net)
-    #status_net = tf.keras.layers.Flatten()(status_net)
+    status_net = tf.keras.layers.Dense(64, activation="relu")(status_input)
 
-    inv_net = tf.keras.layers.Embedding(ASCII_CHARNUM, 32)(inv_input)  # replace this with attention layer maybe?
-    inv_net = tf.keras.layers.Dense(32, activation="relu")(inv_net)
-    #inv_net = tf.keras.layers.Flatten()(inv_net)
+    inv_net = tf.keras.layers.Embedding(ASCII_CHARNUM, 64)(inv_input)  # replace this with attention maybe?
+    inv_net = tf.keras.layers.Flatten()(inv_net)
+    inv_net = tf.keras.layers.Dense(64, activation="relu")(inv_net)
 
-    equip_net = tf.keras.layers.Embedding(ASCII_CHARNUM, 16)(equip_input)
-    equip_net = tf.keras.layers.Dense(16, activation="relu")(equip_net)
-    #equip_net = tf.keras.layers.Flatten()(equip_net)
+    equip_net = tf.keras.layers.Embedding(ASCII_CHARNUM, 32)(equip_input)
+    equip_net = tf.keras.layers.Flatten()(equip_net)
+    equip_net = tf.keras.layers.Dense(32, activation="relu")(equip_net)
 
-    map_net = tf.keras.layers.Embedding(ASCII_CHARNUM, 32, input_length=21 * 79)(map_input)
-    map_net = tf.keras.layers.Conv2D(32, (3, 3), activation="relu", input_shape=(21, 79))(map_net)
+    map_net = tf.keras.layers.Embedding(ASCII_CHARNUM, 64, input_length=21 * 79)(map_input)
+    map_net = tf.keras.layers.Conv2D(64, (3, 3), activation="relu", input_shape=(21, 79))(map_net)
     map_net = tf.keras.layers.MaxPooling2D((2, 2))(map_net)
     map_net = tf.keras.layers.Conv2D(64, (3, 3), activation="relu")(map_net)
     map_net = tf.keras.layers.Flatten()(map_net)
 
-    crop_net = tf.keras.layers.Embedding(ASCII_CHARNUM, 32, input_length=9 * 9)(crop_input)
-    crop_net = tf.keras.layers.Conv2D(64, (3, 3), activation="relu", input_shape=(9, 9))(crop_net)
+    crop_net = tf.keras.layers.Embedding(ASCII_CHARNUM, 64, input_length=9 * 9)(crop_input)
+    crop_net = tf.keras.layers.Conv2D(48, (3, 3), activation="relu", input_shape=(9, 9))(crop_net)
     crop_net = tf.keras.layers.Flatten()(crop_net)
 
-    collected = tf.keras.layers.Concatenate()([status_net, inv_net, equip_net])
-    print(collected.shape)
+    collected = tf.keras.layers.Concatenate()([status_net, inv_net, equip_net, map_net, crop_net])
 
-    # MLP after concat
-    pre_mlp = tf.keras.layers.Dense(256, activation="relu")(collected)
-    print(pre_mlp.shape)
+    # DNN after concat
+    pre_dnn = tf.keras.layers.Dense(128, activation="relu")(collected)
 
     # LSTM
-    lstm = tf.keras.layers.LSTM(256)(pre_mlp)
-    print(lstm.shape)
+    pre_dnn = tf.keras.layers.Reshape((1, -1))(pre_dnn)
+    lstm = tf.keras.layers.LSTM(128)(pre_dnn)
 
-    # final MLP
-    final_mlp = tf.keras.layers.Dense(128)(lstm)
+    # final DNN
+    final_dnn = tf.keras.layers.Dense(128)(lstm)
 
-    output = tf.keras.layers.Dense(21)(final_mlp)
-    print(output.shape)
+    output = tf.keras.layers.Dense(21)(final_dnn)
     # COMMANDS
     # 0  : N MOVE (k)
     # 1  : E MOVE (l)
@@ -132,26 +110,27 @@ def create_model():
     return final_model
 
 
-def get_crop(map: list[list[int]]):  # TODO
+def get_crop(_map: list[list[int]]):  # TODO
     """Returns a 9x9 crop of the given Rogue map surrounding the player."""
     pass
 
 
-def save_checkpoint(model_sv: tf.keras.Model, epoch):
+def save_checkpoint(model_sv: tf.keras.Model, epoch) -> None:
     """Saves the model checkpoint with given epoch."""
     model_sv.save_weights(CKPT_PATH.format(epoch=epoch))
     print("Epoch " + str(epoch) + " saved to " + CKPT_PATH.format(epoch=epoch) + "~")
 
 
-def load_checkpoint(model_ld: tf.keras.Model, epoch):
-    """Loads a model checkpoint at a given epoch."""
+def load_checkpoint(model_ld: tf.keras.Model, epoch) -> tf.keras.Model:
+    """Loads a model checkpoint at a given epoch. Returns the loaded model."""
     model_ld.load_weights(CKPT_PATH)
     print("File " + CKPT_PATH.format(epoch=epoch) + " loaded to current model~")
+    return model_ld
 
 
 if __name__ == "__main__":
     model = create_model()
     tf.keras.utils.plot_model(model, "stuff.png", show_shapes=True)
-    save_checkpoint(model, 0)
+    # save_checkpoint(model, 0)
 
 # †昇天†
