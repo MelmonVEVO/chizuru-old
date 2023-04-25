@@ -144,7 +144,6 @@ if __name__ == "__main__":
     }
     env = RogueEnv(max_steps=500, stair_reward=50.0, config_dict=CONFIG)
     episode_reward = 0
-    turn = 0
     all_rewards = []
     all_losses = []
     env.reset()
@@ -154,26 +153,30 @@ if __name__ == "__main__":
     # Main processing
     try:
         with writer.as_default():
-            for step in itertools.count():
-                epsilon = np.interp(step, [0, EPSILON_DECAY], [EPSILON_START, EPSILON_END])
-                action = agent.get_action(epsilon, state)
-                new_state, reward, done, _ = env.step(action)
-                episode_reward += reward
+            for episode in itertools.count():
+                for turn in itertools.count():
+                    epsilon = np.interp(turn, [0, EPSILON_DECAY], [EPSILON_START, EPSILON_END])
+                    action = agent.get_action(epsilon, state)
+                    new_state, reward, done, _ = env.step(action)
+                    episode_reward += reward
+                    all_rewards.append(reward)
 
-                transition = (state, action, reward, done, new_state)
-                replay_buffer.append(transition)
-                state = new_state
-                turn += 1
+                    transition = (state, action, reward, done, new_state)
+                    replay_buffer.append(transition)
+                    state = new_state
 
-                # Learning step
-                if turn % UPDATE_FREQUENCY == 0 and len(replay_buffer) > MIN_REPLAY_SIZE:
-                    loss, _ = agent.learn(BATCH_SIZE, GAMMA, turn)
+                    # Learning step
+                    if turn % UPDATE_FREQUENCY == 0 and len(replay_buffer) > MIN_REPLAY_SIZE:
+                        loss, _ = agent.learn(BATCH_SIZE, GAMMA, turn)
+                        all_losses.append(loss)
 
-                if done:
-                    env.reset()
-                    all_rewards.append(episode_reward)
-                    episode_reward = 0
-                    turn = 0
+                    if done:
+                        env.reset()
+                        all_rewards.append(episode_reward)
+                        episode_reward = 0
+                        break
+                if episode % EPISODES_PER_INTERVAL && episode != 0:
+                    agent.
 
     except KeyboardInterrupt:
         print("Exiting~")
