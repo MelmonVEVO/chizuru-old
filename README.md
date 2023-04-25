@@ -14,6 +14,8 @@ docker run
 ```
 After that, it should be smooth sailing.
 
+If you want to run this locally, you need to use Python 3.7. Rogue-gym does not install in higher Python versions, I think. It didn't work when I tried to install on Python 3.11.
+
 ## Files
 The model is located in `chizuru.py`. The training file and logic is written in `train.py`, and the code for previewing how the AI plays is located in `preview.py`. Seeing is believing, after all.
 

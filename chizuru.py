@@ -13,96 +13,93 @@
 #  ██║  ██║╚██████╔╝╚██████╔╝╚██████╔╝███████╗
 #  ╚═╝  ╚═╝ ╚═════╝  ╚═════╝  ╚═════╝ ╚══════╝
 #
-# All organic, free-range bits and bytes. Contains no artificial colours or flavourings. May contain bugs.
+# Some of the code here is inspired by the work of https://github.com/sebtheiler/tutorials/blob/main/dqn/train_dqn.py
 
 """This file contains everything needed to run the Chizuru AI."""
 
-import os
+from rogue_gym.envs import RogueEnv
+from random import choice, random
+from collections import deque
 import tensorflow as tf
+import datetime
+import numpy as np
+import itertools
 
 # Constants
 ASCII_CHARNUM = 128
 ENVIRONMENT = "rogueinabox"
-LOG_INTERVAL = 200
-CKPT_PATH = "training/czr-{epoch:04d}.ckpt"
-CKPT_DIR = os.path.dirname(CKPT_PATH)
+EPISODES_PER_INTERVAL = 500
+CKPT_PATH = "training/czr-{interval:04d}.ckpt"
+LOG_DIR = "logs/czr" + datetime.datetime.now().strftime("%Y-%m-%d--%H:%M:%S")
+ACTIONS = ['h', 'j', 'k', 'l', 'u', 'n', 'b', 'y', 's', '.']  # Movement actions, search and wait.
+
+# Hyperparameters
+GAMMA = 0.99
+NUM_ITERATIONS = 20000
+MAX_TURNS_IN_EPISODE = 3000
+BATCH_SIZE = 64
+BUFFER_SIZE = 200000
+MIN_REPLAY_SIZE = 2000
+EPSILON_START = 1.0
+EPSILON_END = 0.01
+EPSILON_DECAY = 150000
+LEARNING_RATE = 0.00001
+UPDATE_FREQUENCY = 10
 
 
-def create_model() -> tf.keras.Model:
-    """Instantiates, compiles and returns the Chizuru model."""
-    status_input = tf.keras.Input(shape=(64,))
-    inv_input = tf.keras.Input(shape=(64,))
-    equip_input = tf.keras.Input(shape=(64,))
-    map_input = tf.keras.Input(shape=(21, 79), dtype=tf.int32)
-    crop_input = tf.keras.Input(shape=(9, 9), dtype=tf.int32)
+class Agent:
+    """Contains everything needed to manage the agent."""
+    def __init__(self, h, w):
+        self.online_net = create_dueling_dqn(h, w)
+        self.target_net = create_dueling_dqn(h, w)
 
-    status_net = tf.keras.layers.Dense(64, activation="relu")(status_input)
+    def get_action(self, e, observation):
+        """Agent chooses an action."""
+        rnd_sample = random()
 
-    inv_net = tf.keras.layers.Embedding(ASCII_CHARNUM, 64)(inv_input)  # replace this with attention maybe?
-    inv_net = tf.keras.layers.Flatten()(inv_net)
-    inv_net = tf.keras.layers.Dense(64, activation="relu")(inv_net)
+        if rnd_sample <= e:
+            return choice(ACTIONS)
+        else:
+            return self.online_net.act(observation)
 
-    equip_net = tf.keras.layers.Embedding(ASCII_CHARNUM, 32)(equip_input)
-    equip_net = tf.keras.layers.Flatten()(equip_net)
-    equip_net = tf.keras.layers.Dense(32, activation="relu")(equip_net)
+    def update_target_network(self):
+        """Updates target network with the online network."""
+        self.target_net.set_weights(self.online_net.get_weights())
 
-    map_net = tf.keras.layers.Embedding(ASCII_CHARNUM, 64, input_length=21 * 79)(map_input)
-    map_net = tf.keras.layers.Conv2D(64, (3, 3), activation="relu", input_shape=(21, 79))(map_net)
-    map_net = tf.keras.layers.MaxPooling2D((2, 2))(map_net)
-    map_net = tf.keras.layers.Conv2D(64, (3, 3), activation="relu")(map_net)
-    map_net = tf.keras.layers.Flatten()(map_net)
+    def learn(self, batch_size, gamma, turn_no):
+        """Learns from replays."""
+        pass
 
-    crop_net = tf.keras.layers.Embedding(ASCII_CHARNUM, 64, input_length=9 * 9)(crop_input)
-    crop_net = tf.keras.layers.Conv2D(48, (3, 3), activation="relu", input_shape=(9, 9))(crop_net)
-    crop_net = tf.keras.layers.Flatten()(crop_net)
 
-    collected = tf.keras.layers.Concatenate()([status_net, inv_net, equip_net, map_net, crop_net])
+def create_dueling_dqn(h, w) -> tf.keras.Model:
+    """Creates a Dueling DQN."""
+    net_input = tf.keras.Input(shape=(h, w), dtype=tf.float32)
 
-    # DNN after concat
-    pre_dnn = tf.keras.layers.Dense(128, activation="relu")(collected)
+    conv1 = tf.keras.layers.Conv2D(32, (3, 3), activation="relu")(net_input)
+    mp1 = tf.keras.layers.MaxPooling2D((2, 2))(conv1)
+    conv2 = tf.keras.layers.Conv2D(64, (3, 3), activation="relu")(mp1)
+    mp2 = tf.keras.layers.MaxPooling2D((2, 2))(conv2)
+    conv3 = tf.keras.layers.Conv2D(64, (3, 3), activation="relu")(mp2)
 
-    # LSTM
-    pre_dnn = tf.keras.layers.Reshape((1, -1))(pre_dnn)
-    lstm = tf.keras.layers.LSTM(128)(pre_dnn)
+    val, adv = tf.split(conv3, 2, 3)
 
-    # final DNN
-    final_dnn = tf.keras.layers.Dense(128)(lstm)
+    val = tf.keras.layers.Flatten()(val)
+    val = tf.keras.layers.Dense(1)(val)
 
-    output = tf.keras.layers.Dense(21)(final_dnn)
-    # COMMANDS
-    # 0  : N MOVE (k)
-    # 1  : E MOVE (l)
-    # 2  : S MOVE (j)
-    # 3  : W MOVE (h)
-    # 4  : NE MOVE (u)
-    # 5  : SE MOVE (n)
-    # 6  : SW MOVE (b)
-    # 7  : NW MOVE (y)
-    # 8  : SEARCH (s)
-    # 9  : WAIT (.)
-    # 10 : EAT* (e)
-    # 11 : QUAFF* (q)
-    # 12 : READ* (r)
-    # 13 : WIELD (WEAPON)* (w)
-    # 14 : WEAR (ARMOUR)* (W)
-    # 15 : TAKE OFF (ARMOUR) (T)
-    # 16 : PUT ON (RING)* (p)
-    # 17 : REMOVE (RING) (R)
-    # 18 : THROW+* (t)
-    # 19 : ZAP+* (z)
-    # 20 : DROP* (d)
+    adv = tf.keras.layers.Flatten()(adv)
+    adv = tf.keras.layers.Dense(len(ACTIONS))(adv)
+
+    reduced = tf.keras.layers.Lambda(lambda w: tf.reduce_mean(w, axis=1, keepdims=True))
+
+    output = tf.keras.layers.Add()([val, tf.keras.layers.Subtract()([adv, reduced(adv)])])
 
     final_model = tf.keras.Model(
-        inputs=[status_input,
-                inv_input,
-                equip_input,
-                map_input,
-                crop_input],
+        inputs=[input],
         outputs=[output]
     )
 
     final_model.compile(
-        optimizer=tf.keras.optimizers.Adam(),
+        optimizer=tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE),
         loss=tf.keras.losses.MeanSquaredError(),
         metrics=[tf.keras.metrics.SparseCategoricalAccuracy()]
     )
@@ -110,27 +107,79 @@ def create_model() -> tf.keras.Model:
     return final_model
 
 
-def get_crop(_map: list[list[int]]):  # TODO
-    """Returns a 9x9 crop of the given Rogue map surrounding the player."""
+def create_rainbow_dqn(_h, _w):
+    """Creates a Rainbow Deep Q-network."""
     pass
 
 
-def save_checkpoint(model_sv: tf.keras.Model, epoch) -> None:
-    """Saves the model checkpoint with given epoch."""
-    model_sv.save_weights(CKPT_PATH.format(epoch=epoch))
-    print("Epoch " + str(epoch) + " saved to " + CKPT_PATH.format(epoch=epoch) + "~")
+def save_checkpoint(model_sv: tf.keras.Model, interval) -> None:
+    """Saves the model checkpoint with given interval."""
+    model_sv.save_weights(CKPT_PATH.format(interval=interval))
+    print("Episode " + str(interval) + " saved to " + CKPT_PATH.format(interval=interval) + "~")
 
 
-def load_checkpoint(model_ld: tf.keras.Model, epoch) -> tf.keras.Model:
-    """Loads a model checkpoint at a given epoch. Returns the loaded model."""
+def load_checkpoint(model_ld: tf.keras.Model, interval) -> tf.keras.Model:
+    """Loads a model checkpoint at a given interval. Returns the loaded model."""
     model_ld.load_weights(CKPT_PATH)
-    print("File " + CKPT_PATH.format(epoch=epoch) + " loaded to current model~")
+    print("File " + CKPT_PATH.format(interval=interval) + " loaded to current model~")
     return model_ld
 
 
 if __name__ == "__main__":
-    model = create_model()
-    tf.keras.utils.plot_model(model, "stuff.png", show_shapes=True)
-    # save_checkpoint(model, 0)
+    agent = Agent(21, 79)
+
+    tf.keras.utils.plot_model(agent.online_net, "stuff.png", show_shapes=True)
+
+    writer = tf.summary.create_file_writer(LOG_DIR)
+
+    replay_buffer = deque(maxlen=500)
+
+    CONFIG = {
+        'width': 79, 'height': 21,
+        'dungeon': {
+            'style': 'rogue',
+            'room_num_x': 3, 'room_num_y': 2
+        },
+        'enemies': []
+    }
+    env = RogueEnv(max_steps=500, stair_reward=50.0, config_dict=CONFIG)
+    episode_reward = 0
+    turn = 0
+    all_rewards = []
+    all_losses = []
+    env.reset()
+    done = False
+    state, _, _, _ = env.step('.')
+
+    # Main processing
+    try:
+        with writer.as_default():
+            for step in itertools.count():
+                epsilon = np.interp(step, [0, EPSILON_DECAY], [EPSILON_START, EPSILON_END])
+                action = agent.get_action(epsilon, state)
+                new_state, reward, done, _ = env.step(action)
+                episode_reward += reward
+
+                transition = (state, action, reward, done, new_state)
+                replay_buffer.append(transition)
+                state = new_state
+                turn += 1
+
+                # Learning step
+                if turn % UPDATE_FREQUENCY == 0 and len(replay_buffer) > MIN_REPLAY_SIZE:
+                    loss, _ = agent.learn(BATCH_SIZE, GAMMA, turn)
+
+                if done:
+                    env.reset()
+                    all_rewards.append(episode_reward)
+                    episode_reward = 0
+                    turn = 0
+
+    except KeyboardInterrupt:
+        print("Exiting~")
+        writer.close()
+
+    env.close()
+
 
 # †昇天†

@@ -3,13 +3,34 @@
 \usepackage{natbib}
 \usepackage{graphicx}
 \usepackage{hyperref}
-\usepackage{appendix}
+\usepackage[page,toc,titletoc,title]{appendix}
 \usepackage{listings}
+\usepackage{color}
+\usepackage[nottoc,notlof,notlot]{tocbibind}
+\usepackage{amsfonts}
+\usepackage[skip=10pt]{parskip}
 
+\definecolor{keyword}{rgb}{0,0,0.5}
+\definecolor{number}{rgb}{0, 0, 1}
+\definecolor{string}{rgb}{0, 0.5, 0}
+\definecolor{comment}{rgb}{0.5, 0.5, 0}
+\definecolor{grey}{rgb}{0.5, 0.5, 0.5}
 \graphicspath{ {./img/} }
-\lstset{language=Python}
-\setlength{\parskip}{3pt plus2pt minus2pt}
-\setlength{\parindent}{12px}
+\lstset{
+    language=Python,
+    basicstyle=\footnotesize\ttfamily,
+    commentstyle=\color{comment},
+    keywordstyle=\color{keyword},
+    numberstyle=\color{number},
+    stringstyle=\color{string},
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numbersep=5pt,
+    numberstyle=\tiny\color{grey},
+    showspaces=false,
+    showstringspaces=false
+}
 
 \begin{document}
     \title{chizuru-rogue: Deep Learning for Dungeon Crawling}
@@ -47,83 +68,196 @@
 
     \newpage
 
+    \addcontentsline{toc}{subsection}{Abstract}
     \begin{abstract}
-        Video games is one of the most popular problem domains to tackle with reinforcement learning due to the interesting complexity that can arise from simple sets of rules that many games provide.
-        By training reinforcement learning models on video games and proving they are effective at solving problems, they can then be repurposed for other problems such as self-driving cars and healthcare.
+        \noindent Video games are one of the most popular problem domains to tackle with reinforcement learning due to the interesting complexity that can arise from simple sets of rules that many games provide.
+        By training reinforcement learning models on video games and proving they are effective at solving problems, they can then be repurposed for other problems such as self-driving cars to make decisions about speed and navigation,
+        and healthcare to optimise and personalise treatment plans.
 
-        In this article we introduce chizuru-rogue, which is a computer program designed to play the video game Rogue, a famous role-playing game that inspired the creation of the ``roguelike'' video game genre.
+        \noindent In this article we introduce chizuru-rogue, which is a computer program designed to play Rogue, a well-known dungeon-crawling game regarded as the pioneer of the ``roguelike'' video game genre, which is characterised by randomly generated levels, turn-based gameplay and permanent character death.
         Rogue offers a unique problem to solve, requiring a player to solve partially observable, randomly generated levels.
-        chizuru-rouge utilises a customised neural network that involves an LSTM for long-term and short-term memory to explore levels in Rogue, collect gold and reach the goal of collecting the Amulet of Yendor.
 
-        TensorFlow will be used as a framework to implement the reinforcement learning agent.
+        \noindent chizuru-rouge interfaces with a program called Rogue-gym, a program that accurately mimics the gameplay of Rogue and
+        the agent utilises a Rainbow Deep Q-network to explore the dungeon collect gold and reach the goal of collecting the Amulet of Yendor. % customised neural network that involves an LSTM for long-term and short-term memory to explore levels in Rogue
+
+        \noindent TensorFlow will be used as a framework to implement the reinforcement learning agent.
         TensorFlow is a Python library that provides tools to streamline development of deep learning models.
     \end{abstract}
+
+    {\footnotesize \textbf{Keywords - reinforcement learning, neural networks, deep q-learning, roguelikes, video games, machine learning}}
+
+    \newpage
+
+    \addcontentsline{toc}{subsection}{Acknowledgements}
+    \begin{center}
+        \section*{Acknowledgements}
+        I would like to express my gratitude to my supervisor Dr. Jie Zhang for providing me with invaluable guidance
+        and feedback on my dissertation throughout the year, my parents for their proofreading and the administrators
+        of Hex, the university GPU cloud for providing me with computational power to run my model on.
+    \end{center}
 
     \newpage
 
     \tableofcontents
     \listoffigures
-    \listoftables
-
-    \newpage
-
-    \begin{center}
-    \section*{Acknowledgements}
-    To-do
-
-        % I would like to express my sincere gratitude to the following people:
-
-        % \vspace{3mm}
-
-        % \emph{Dr. Jie Zhang}
-        
-        % My project supervisor, for providing me with invaluable guidance and feedback on my dissertation throughout the year.
-
-        % \vspace{3mm}
-
-        % \emph{Mr. Raphael and Mrs. Christine Drescher}
-        
-        % My parents, for their proofreading and their encouragement.
-
-        % \vspace{5mm}
-
-        % This project made use of Hex, the GPU Cloud in the Department of Computer Science at the University of Bath.
-    \end{center}
+    % \listoftables
 
     \newpage
 
     \pagenumbering{arabic}
 
     \section{Introduction}\label{sec:introduction}
-    TODO introduction goes here lmao
+    Rogue is a 1980 computer game that belongs to a genre called ``roguelikes''.
+    Roguelikes are characterised by challenging, turn based dungeon crawling gameplay, procedurally generated levels and permanent character death.
+    They are inspired by Rogue.
+    This genre of game offers a fascinating domain to apply reinforcement learning methods to due to the amount of strategies and gameplay styles that roguelike games allow.
+    In these games, turns often resolve immediately, allowing for efficient training.
+
+    The aim of chizuru-rogue is to apply deep reinforcement learning methods for an agent to learn and survive within Rogue.
+    Reinforcement learning works by an agent using the current state to decide on an action to do, then observing a reward for that action, as well as a resulting new state.
+    Reinforcement learning is suitable for this problem domain because games provide rewards for skilled play, allowing for training.
+    The hope is chizuru-rogue will be able to play the game to a level where it can reach the Amulet of Yendor, the goal of the game.
+
+    Should the project prove successful, it can serve as a foundation for creating AI to play more complex
+    roguelike games like NetHack\footnote{https://nethackwiki.com/wiki/NetHack}.
+
+    \subsection{Rogue - the game}\label{subsec:rogue}
+    \subsubsection{Objective}\label{subsubsec:objective}
+    In Rogue, the player's main objective is to get a high score by descending the Dungeon of Doom to slay monsters, collect gold coins, retrieve the Amulet of Yendor and escape the dungeon with it alive.
+    The game is turn based, which means the player can spend as long as they want thinking their next move before the game processes the environment.
+    Figure~\ref{fig:rogsc} depicts an example screenshot of the game.
+
+    \begin{figure}[ht]
+        \caption[A screenshot of an example Rogue game.]{A screenshot of an example Rogue game. The player is represented with \texttt{@}, stairs with \texttt{\%}, a kestrel enemy with \texttt{K} and gold with \texttt{*}.}
+        \centering
+        \includegraphics[scale=0.5]{rogue_screenshot}
+        \label{fig:rogsc}
+    \end{figure}
+
+    \subsubsection{Environment}\label{subsubsec:environment}
+    The dungeon's floors are randomly generated mazes made up of several rooms connected with corridors.
+    Rooms may be empty or populated with several items or enemies, and one will have stairs to descend to the next floor,
+    represented with the character \texttt{\%}.
+    When the player starts a new run\footnote{A play-through of the game from start to finish.}, the player is placed in dungeon level 1 with basic equipment.
+
+    Rogue's environment is partially observable;
+    the dungeon configuration is initially obscured to the player, revealing itself as the player moves around.
+
+    The game tracks several stats that are always shown to the player:
+    \begin{itemize}
+        \item \textbf{Level} denotes the current dungeon level.
+        \item \textbf{HP} (Hit Points) represents how much damage the player can take before death.
+        The number in brackets is the player's maximum HP.
+        \item \textbf{Str} (Strength) represents how strong the player is.
+        The number in brackets is the player's maximum strength.
+        \item \textbf{Gold} is how many gold coins the player has collected.
+        Gold increases the player's final score.
+        \item \textbf{Arm} (Armour) is the player's current armour rating.
+        The higher the rating, the higher chance to avoid attacks.
+        \item \textbf{Exp} shows the player's experience level and total experience points.
+        When the player earns enough experience points, the player's experience level increases, increasing the player's maximum HP.
+    \end{itemize}
+
+    \subsubsection{Items}\label{subsubsec:items}
+    There are a wide variety of items the player can use, such as potions, scrolls, weapons and armour.
+    Some items need to be identified before the player knows what it will do.
+    This can either be done by using a scroll of identify, or by blindly using or wearing the item, which may be risky as some items can have negative effects.
+
+    \subsubsection{Combat}\label{subsubsec:combat}
+    As the player navigates around the dungeon, they will encounter enemies of increasing difficulty.
+    The player can attack enemies by moving into them, attacking them with the equipped weapon.
+    Enemies in the game will try to harm the player by attacking and reducing the player's HP\@.
+    If the player's HP falls to 0, the player dies and the game ends.
+
+    Unlike many other role-playing games of the time, Rogue uses character permanent death as a mechanic, providing the player with
+    the unique challenge of surviving till the end, as the player could not load a previous save if they are defeated.
+    Therefore, the player has to think through their future moves much more rigorously;
+    the player's decisions have much more weight to them as a wrong move could mean game over.
+    \emph{Michael Toy}, Rogue's co-creator, touched on the topic of permanent death in Roguelike Celebration 2016~\citep{gamasutra16} by saying `We were trying to make it more immersive by making things matter \ldots'.
+
+    \subsection{Project Objectives}\label{subsec:objectives}
+    The primary objectives of this project are as follows:
+    \begin{itemize}
+        \item Create a program that uses artificial intelligence to play Rogue.
+        This will involve designing, developing and deploying the program to a GPU cloud for training an agent.
+        \item Improve upon existing work for playing Rogue.
+        As we will explain in Section~\ref{subsec:exploring-rogue}, existing literature has only applied the standard
+        DQN\footnote{Deep Q-network: using neural networks to approximate Q-learning.} to Rogue.
+        We will investigate into improvements of the DQN algorithm and apply them to play Rogue.
+        \item Experiment by using a Dueling DQN, then a Rainbow DQN, both improvements to the original DQN algorithm.
+        We will conduct two experiments for this product - training the agent with a Dueling DQN and a Rainbow DQN.
+        We will display, analyse and compare the results of the two experiments.
+    \end{itemize}
+
+    \subsection{Summary}\label{subsec:summary1}
+    In this section we have introduced our problem domain Rogue, a dungeon crawling game that we will make our program explore.
+    Beyond this section, Section~\ref{sec:literature-technology-and-data-review} is focused on the literature review of
+    this project, collating and demonstrating previous work on the subjects that are covered on this project.
+    Section~\ref{sec:design-and-methodology} will explain in detail the methodology we will use and how we will collect
+    results from the upcoming experiments.
+    Section~\ref{sec:agent-training-and-results} will focus on discussing the results of the experiments.
 
     \section{Literature, Technology and Data Review}\label{sec:literature-technology-and-data-review}
 
-    \subsection{Fundamentals}\label{subsec:fundamentals}
-
-    The fundamentals of reinforcement learning and many fundamental algorithms is explained in detail by~\citet{sutton18}.
+    \subsection{Fundamentals of RL}\label{subsec:fundamentals}
+    The fundamentals of reinforcement learning and many fundamental algorithms for solving sequential decision problems is explained in detail by~\citet{sutton18}.
     The core idea behind reinforcement learning algorithms is that an agent performs \emph{actions} on an \emph{environment} by deriving what it should do from its \emph{policy}, which is a mapping from states to actions.
     Once the agent performs an action, it receives the new game state as well as a \emph{reward} signal, telling the agent how good its choice was.
+
+    \begin{figure}[ht]
+        \caption[The reinforcement learning loop.]{The reinforcement learning loop. An agent is provided with a state, performs an action and is provided with a reward signal and the resulting state. Image credit: \citet{bhattrl}}
+        \centering
+        \includegraphics[scale=0.4]{rlgraph}
+        \label{fig:rlgraph}
+    \end{figure}
 
     The purpose of rewards is for the agent to constantly estimate a \emph{value function}.
     This function tells the agent either how profitable being in a certain state and following its policy is, or how profitable taking a certain action then following its policy is.
     The theory is that the agent should aim to maximise its reward over the long term.
 
+    \subsubsection{Q-learning}
     One of the most well-known reinforcement learning algorithms is the Q-learning algorithm~\citep[chap.~6.5]{sutton18}.
     In this algorithm, the agent keeps track of a table, mapping state-action pairs to its value.
     When the agent reaches a certain state, it consults its Q-table to determine the most valuable action to take.
 
+    The goal of Q-learning is to find the optimal Q-function, which is defined by the Bellman optimality equation:
+    \[Q^{*}(s, a) \quad = \quad \mathbb{E} [r + \gamma max_{a'} Q^{*}(s', a')]\]
+
+    This means the optimal value of taking action \(a\) in state \(s\) is the expected reward of taking the action and then following the policy from there.
+
     \subsection{Deep Learning}\label{subsec:deep-learning}
-    While the Q-learning algorithm can solve simple problem domains sufficiently, when it comes to more complex domains that don't have fully observable states such as Atari games, the amount of resources it takes to run the algorithm can become extremely large.
-    The way that \citet{mnih15} chose to solve this is to use a convolutional neural network to approximate the Q-learning action-value functions, through an algorithm the authors call ``Deep Q-network''.
+    Deep learning is a method of artificial intelligence that involves the use of deep neural networks to process data in a way inspired by the human brain. % TODO improve and make sure not plagiarising
+    
+    Representing Q-values containing every state-action pairing becomes infeasible in large state spaces such as video
+    games, requiring ever expanding tables and computational space needed to store them.
+    Deep Q-learning, a technique by OpenAI~\citep{mnih15}, remedies this by using a convolutional neural network to
+    approximate the optimal Q-function \(Q*(s, a)\) using a convolutional neural network instead of keeping track of
+    a table.
 
     The Deep Q-network in their writing was shown to play several Atari games to a superhuman level, most notably Video Pinball and Boxing.
-    A similar algorithm involving neural networks was employed by~\citet{silver16} in their development of the AlphaGo system, an agent that was found to beat human grandmaster players in the game of Go. The authors used a convolutional neural network alongside ``policy gradient'' reinforcement learning, where
+    A similar algorithm involving neural networks was employed by~\citet{silver16} in their development of the AlphaGo system, an agent that was found to beat human grandmaster players in the game of Go.
+    The authors used a convolutional neural network alongside ``policy gradient'' reinforcement learning, which is where % TODO continue
 
-    While the DQN algorithm by itself is serviceable for simpler problem domains such as Atari, there are better methods to tackle more challenging domains.
+    While the DQN algorithm by itself is serviceable for simpler problem domains such as Atari, there have been improvements to tackle more challenging domains.
+    One of the first improvements to the DQN algorithm is the Double DQN~\citep{hasselt15}.
+    Double DQN improves on the original DQN by using a current network for selecting actions, and then training a ``target network''
+    to calculate the target Q-value of said action.
+    This improves on the original DQN by solving an issue the original DQN had that the Double DQN paper explains in detail,
+    where the original DQN suffered from ``substantial overestimations'' when playing Atari games.
+
+    This is further improved with the Dueling DQN~\citep{wang16}.
+    Dueling DQN works by splitting the existing DQN network into two streams: a state-value stream and an ``advantage'' stream.
+    Advantage is a value describing how advantageous taking a given action would be given a state-value.
+    These streams are then joined with an aggregation layer.
+    This saves on computation time due to the intuition that it is not necessary to estimate action-values for each action.
+
+    And finally, Rainbow DQN~\citep{hessel17}, which combines six different techniques to improve upon the Deep Q-network algorithm.
+    These techniques are Double DQN~\citep{hasselt15}, Dueling DQN~\citep{wang16}, Prioritised Experience Replay~\citep{schaul16},
+    Multi-step Learning~\citep[chap.~7.1]{sutton18}, Distributional RL~\citep{bellemare17} and Noisy Networks~\citep{fortunato19}.
+
     When trying to create an agent that plays the online game Dota 2, \citet{berner19} used a Long Short-term Memory network.
 
-    LSTMs were first defined by~\citet{hochreiter97} and improved upon in later works.
+    LSTMs\footnote{Long short-term memory network, type of "recurrent neural network" used in the field of deep learning capable of holding long-term dependencies.} were first defined by~\citet{hochreiter97} and improved upon in later works.
     An LSTM is an extension of the ``recurrent'' neural network, where nodes use feedback connections to allow the network to ``remember'' information in the long term.
     This solves the problem that traditional neural networks have, where they can't store information that can be useful to them in the long term.
 
@@ -133,191 +267,123 @@
     An expert system, as stated by~\citet{jackson86} in their book's introduction, ``is a computing system capable of representing and reasoning about some knowledge-rich domain''.
     Essentially, these systems aim to emulate a human expert in a particular domain and their decision-making.
     While expert systems are artificial intelligence, they make no use of machine learning to learn and adapt to situations, they follow what instructions have been programmed within them and are designed to rigidly solve one problem domain.
-    ROG-O-MATIC provides a good yardstick to measure the performance of the agent we will be creating.
 
     An interface for machine learning agents to play Rogue has been created, called Rogueinabox~\citep{asperti17}.
     Rogueinabox is a framework that allow developers to create agents that interface with the game Rogue.
     In the Rogueinabox article, the authors ran a Deep Q-learning agent on the game for testing.
     They simplified the problem domain to have the agent only consider exploring the dungeon to find the stairs, without fighting or collecting items.
-    Their agent performed reasonably well accounting dungeon exploration alone, however, the aim of our agent is to reach the Amulet of Yendor and clear the game, which is difficult if the player does not fight monsters and gets stronger.
+    Their agent performed reasonably well accounting dungeon exploration alone, however, the aim of our agent is to reach the Amulet of Yendor in the final floor.
 
     The initial agent proposed in the original Rogueinabox paper was further improved upon~\citep{asperti18}.
     The problem domain was still simplified to only consider getting to the exit stairs alone.
-    While the previous implementation employed a DQN, the agent in the improvement implemented an A3C algorithm as a base, rather than a DQN. The A3C algorithm in the improvement was partitioned, meaning the sample space is \emph{partitioned} into a set of situations.
+    While the previous implementation employed a DQN, the agent in the improvement implemented an A3C~\citep{mnih15}\footnote{Asynchronous Advantage Actor Critic, an asynchronous algorithm that aims to optimise a policy and estimate a value function by training multiple actors in parallel.} algorithm as a base, rather than a DQN. The A3C algorithm in the improvement was partitioned, meaning the sample space is \emph{partitioned} into a set of situations.
     This allows the different agents that run simultaneously to learn from different situations to build a common cumulative reward.
     It also involves the work by~\citet{jaderberg16}.
-    The A3C algorithm is first defined by~\citet{mnih15}.
-    It is an asynchronous algorithm that aims to optimise a policy and estimate a value function by training multiple actors in parallel.
 
     \subsection{Exploring Other Roguelikes}\label{subsec:exploring-other-roguelikes}
-
     Rogue is not the only roguelike that has been explored with machine learning.
-    NetHack is one of the most popular games that has been explored with neural networks.
-    NetHack is a roguelike game created in 1987 and is still being updated to this day, with a small but dedicated player-base.
+    NetHack, a popular roguelike game created in 1987, has been explored with machine learning during the development of the NetHack Learning Environment~\citep{kuttler20}.
+    It is an environment that allows reinforcement learning agents to interact with NetHack easily.
+    The paper introduces a baseline model that they trained on the environment.
+    The map and player status are processed separately, concatenated, and run through an LSTM and a regular layer to produce the policy.
 
-    SkillHack~\citep{matthews22}.
-    NLE~\citep{kuttler20}.
+    % SkillHack~\citep{matthews22}.
     An article by~\citet{izumiya21} explores how to involve the item inventory in the neural network system of a deep reinforcement learning agent with an attention-based approach.
-    It is attention based as the system calculates a score for each item in an inventory using an ``attention function''
+    It is attention based as the system calculates a score for each item in an inventory using an ``attention function''.
 
-    \section{Concepts}\label{sec:concepts}
+    \section{Design and Methodology}\label{sec:design-and-methodology}
+    \subsection{Problem Simplification}\label{subsec:problem-simplification}
+    Due to the complex nature of the game, we introduce some simplifications to the problem so that
+    we may create more manageable solutions.
 
-    \subsection{Reinforcement Learning Concepts}\label{subsec:reinforcement-learning-concepts}
-
-    \subsection{Rogue Concepts}\label{subsec:rogue-concepts}
-    Rogue is a 1980 role-playing computer game inspired by text-based adventure games and tabletop role-playing games like Dungeons and Dragons that led to the creation of ``roguelikes'' - games that are based off of the core gameplay of Rogue.
-    Roguelike games are mainly characterised by challenging, turn based hack and slash gameplay, procedurally generated levels and permanent character death.
-
-    \subsubsection{Objective}\label{subsubsec:objective}
-    In Rogue, your main objective is to get a high score by descending the Dungeon of Doom to slay monsters, collect gold coins, retrieve the Amulet of Yendor and escape the dungeon with it alive.
-    The game is turn based, which means the player can spend as long as they want thinking their next move before the game processes the environment.
-    Figure~\ref{fig:rogsc} depicts an example screenshot of the game.
-
-    \begin{figure}[t]
-        \caption{A screenshot of an example Rogue game.}
-        \centering
-        \includegraphics[scale=0.5]{rogue_screenshot}
-        \label{fig:rogsc}
-    \end{figure}
-
-    \subsubsection{Environment}\label{subsubsec:environment}
-
-    Every floor of the dungeon is a randomly generated maze consisting of several rooms connected with corridors.
-    Rooms sometimes generate empty, but they may also generate populated with several items or enemies.
-    One of the rooms will contain the stairs that will let the player descend the dungeon, represented with the character \texttt{\%}.
-    When the player starts a new run, the player is placed in dungeon level 1 with some food, a mace, basic armour, a bow and arrows.
-
-    Rogue's environment is partially observable.
-    The dungeon configuration is initially obscured to the player, revealing itself as the player moves around.
-    In addition, enemies on the map will only be shown to the player if the enemy is within the player character's line of sight.
-
-    The game tracks several stats that are always shown to the player:
     \begin{itemize}
-        \item \textbf{Level} denotes the current dungeon level.
-        \item \textbf{HP} (Hit Points) represents how much damage the player can take before death.
-            The number in brackets is the player's maximum HP.
-        \item \textbf{Str} (Strength) represents how strong the player is.
-            The number in brackets is the player's maximum strength.
-        \item \textbf{Gold} is how many gold coins the player has collected.
-            Gold increases the player's final score.
-        \item \textbf{Arm} (Armour) is the player's current armour rating.
-            The higher the rating, the higher chance to avoid attacks.
-        \item \textbf{Exp} shows the player's experience level and total experience points.
-            When the player earns enough experience points, the player's experience level increases, increasing the player's maximum HP.
+        \item Monsters are disabled, so that combat is not part of the problem.
+        \item The amount of actions available to the agent is reduced.
+        \item Initially we disabled hunger, so that the agent only needs to focus on descending the dungeon.
     \end{itemize}
 
-    \subsubsection{Items}\label{subsubsec:items}
+    The objective of the neural network for chizuru-rogue is to take in the observed dungeon state as inputs and return an action that will maximise the expected reward as output as if it were maximising an action-value function.
 
-    There are a wide variety of items the player can use, such as potions, scrolls, weapons and armour.
-    Some items need to be identified before the player knows what it will do.
-    This can either be done by using a scroll of identify, or by blindly using or wearing the item, which may be risky.
-    Some potions have negative effects such as the potion of poison, and rings may be ``cursed''.
-    Cursed rings may not be removed once equipped, and they reduce the player's stats.
-    Curses can be removed with the scroll of remove curse.
-
-    \subsubsection{Combat}\label{subsubsec:combat}
-    As the player navigates around the dungeon, they will encounter enemies of increasing difficulty.
-    Enemies in the game will try to harm the player by attacking and reducing the player's HP\@.
-
-    The player can attack enemies by moving into them.
-    This will make the player automatically hit the enemy with their equipped weapon.
-    Each weapon in Rogue deals a different amount of damage, so it is important to find stronger weapons.
-
-    If the player defeats an enemy, they are granted ``experience points''.
-    When the player earns enough experience points to increase their player level, their HP increases, making them tougher.
-
-    If the player's HP reaches 0, the player dies.
-    The game will then provide the player with a scoreboard of the top 10 plays, each entry containing the name of the player, their score and their fate.
-    The player will then have to start the game from the beginning, generating a new dungeon to explore.
-
-    Unlike many other role-playing games of the time, Rogue uses character permanent death as a mechanic, providing the player with
-    the unique challenge of surviving till the end, as the player could not load a previous save if they are defeated.
-    This makes the player think through their future moves much more rigorously as the player's decisions have much more weight to them.
-    \emph{Michael Toy}, Rogue's co-creator, touched on the topic of permanent death in Roguelike Celebration 2016 in \citet{gamasutra16} by saying `We were trying to make it more immersive by making things matter \ldots ``this thing matters, so I'm going to think about this.'' '.
-
-
-    % Rogue is a partially observable Markov Decision Process. To deal with this, we use a Long Short-term Memory system, an extension of a feedforward neural network, to process the sequence of observations. This is because LSTMs are capable of ``remembering'' information for longer periods of time. The LSTM algorithm was first defined by \citet{hochreiter97} and popularised much later, one example of an agent implementing a LSTM including AlphaStar by \citet{vinyals19}.
-
-    % The goal of chizuru4rogue is to improve upon the work of \citet{asperti18} by introducing enemies and items into the Rogue world for the agent to deal with. The agent will endeavour to maximise the final score that it gets within one run. A run's final score is used as the reward for the reinforcement learning methods within the agent. A run's final score is determined by how much gold a player collects. The deeper a player ventures in the dungeon, the more gold they can collect. Additionally, the player gains a large score bonus if the game ends while the player possesses the Amulet of Yendor, an item found in dungeon level 26.
-
-    % We use a combination of supervised learning and self-play. During the supervised learning portion of the learning process, we provide replays of Rog-o-Matic completing the game. During the self-play portion of the learning process, chizuru4rogue will play thousands of runs interfacing with Rogueinabox to receive game state and send actions.
-
-    % Using only reinforcement learning is challenging, mainly due to the large action space that Rogue provides. Unlike most other video games where the actions you can perform is contextual, Rogue is a game where every single command is available to you at all times. This allows the player to develop a wide variety of strategies, but increases the overall complexity of the game. Additionally, some commands are combined with selecting an item from the player's inventory e.g. ``wear chain mail armour'', increasing the size of the action space in different contexts.
-
-
-
-    \section{Network Architecture}\label{sec:network-architecture}
-
-    The objective of the neural network for Chizuru is to take in the observed dungeon map, player status, recent message and inventory as inputs and return an action that will maximise the expected reward as output as if it were maximising an action-value function.
-
-    \subsection{State}\label{subsec:state}
-
-    We use the following information to represent game state:
-    \begin{itemize}
-        \item The player's status - HP, strength, EXP and other attributes.
-        \item The game map, a 21 x 79 array of ASCII characters.
-        \item A 9 x 9 crop of the map centred around the player
-        \item The inventory of items.
-        \item The items the player is equipped with
-    \end{itemize}
-
-    \subsection{Action}\label{subsec:action}
-
+    \subsection{Player Action}\label{subsec:action}
     Every action in Rogue is available to the player from the start of the game.
-    Actions can be divided into basic actions and actions that utilise an inventory item, depending on the action and the item type.
-    For example,
-    the ``eat'' action can be used to make the player eat something in the inventory.
-    If the player attempts to use an action on an item where it wouldn't make sense, the action fails and a message is displayed to the player, such as `Ugh, you would get ill if you ate that'.
 
     When the player uses an action that utilises an item, the game will await the player to input a key.
     Every item in the player's inventory maps to one key on the keyboard.
-    The player may input \texttt{*} in order to see what legal items they may choose and their corresponding key.
-    Additionally, the player may see what the item to keyboard mapping is by viewing their inventory with the \texttt{i} key at any other point during the game.
-
-    \subsection{Policy Optimisation}\label{subsec:policy-optimisation}
+    The player may input \texttt{*} to see what legal items they may choose and their corresponding key.
+    Additionally, the player may see what the item-key mapping is by viewing their inventory with the \texttt{i} key at any time.
 
     \subsection{Neural Network}\label{subsec:neural-network}
-    The neural network processes the inputs in a separate subnetwork, which is then concatenated, fed through an LSTM, and a multilayer perceptron network to produce the final output.
-    Figure~\ref{fig:netwk} visually shows the structure of the Chizuru neural network.
+    The agent in our experiments will first utilise a Dueling DQN, then utilise a Rainbow DQN as described in the report by~\citet{hessel17}.
+    The following techniques make up the Rainbow DQN:
+    \begin{itemize}
+        \item \textbf{Double Q-learning}: a technique applied to Deep Q-learning where double estimation is used
+        with the goal to remedy a problem that the original DQN had where it would be biased to overestimate Q-values.
+        \item \textbf{Prioritised Experience Replay}: a technique where experiences in the replay buffer are
+        prioritised based on their expected learning progress.
+        \item \textbf{Dueling networks}~\citep{schaul16}: an extension of Deep Q-learning that utilises the concept of Advantage.
+        Dueling DQN splits the network into two streams - one to approximate state-value and one to approximate advantage.
+        These streams are then aggregated to calculate the Q-values.
+        \item \textbf{Multi-step learning}~\citep[chap.~7.1]{sutton18}: a technique where the agent learns from the cumulative reward over several steps as individual actions may not provide an immediate reward.
+        \item \textbf{Distributional RL}: approximating distributions of returns rather than expected returns.
+        \item \textbf{Noisy Networks}: applying random noise to the neural network's parameters in order to avoid overfitting.
+    \end{itemize}
 
-    \begin{figure}[t]
-        \caption{The structure of the Chizuru neural network *OUTDATED.} % TODO outdated
-        \centering
-        \includegraphics[scale=0.5]{network_structure}
-        \label{fig:netwk}
-    \end{figure}
+    \subsection{Agent Implementation}\label{subsec:implementation}
+    The agent will be implemented in Python, which is one of the most popular languages used to model neural networks due to its many AI-related libraries that are available, including TensorFlow, which is what we use.
+    TensorFlow provides tools for working with linear algebra and is widely used in machine learning.
+    We chose TensorFlow because it is popular, and it is bundled with Keras, a library that streamlines the creation and running of neural networks.
 
-    \section{Implementation}\label{sec:implementation}
+    The agent will use Rogue-gym~\citep{kanagawa19} as an environment to interact with.
+    Rogue-gym is a game that accurately replicates the gameplay of Rogue while also allowing customisation of the game.
+    It also comes with a customised OpenAI Gym environment which allows AI agents written in Python to interact with the game.
 
-    \subsection{Language}\label{subsec:language}
+    \subsection{Summary}\label{subsec:summary2} % TODO
 
-    The agent will be implemented in Python.
-    Python is one of the most popular languages used to model neural networks due to the large amount of artificial intelligence related libraries that are available for the language.
-    The main library we will be using is TensorFlow with Keras.
-    TensorFlow is a library that provides tools for working with linear algebra, mainly used in machine learning.
-    Keras is a wrapper for TensorFlow that streamlines the creation of machine learning models in Python by providing the programmer with tools to construct machine learning models with ease.
+    \section{Agent Training and Results}\label{sec:agent-training-and-results}  % TODO things here after data collection
+    \textbf{--- Everything below here is unfinished. ---}
 
-
-    \section{Agent Training and Investigation}\label{sec:agent-training-and-investigation}
-
-    \subsection{Evaluation}\label{subsec:evaluation}
+    The agent was trained and evaluated on multiple Nvidia GeForce RTX 2080 graphics cards using CUDA.
 
     During our training of the agent, we measured the agent's performance with the following criteria after every run:
     \begin{itemize}
-        \item The final score the agent achieved
+        \item The final score the agent achieved per episode (total reward)
         \item The deepest dungeon level the agent entered
     \end{itemize}
 
-    \section{Conclusion and Future work}\label{sec:conclusion-and-future-work}
+    \subsection{Dueling DQN}\label{subsec:dueling-dqn}
 
-    chizuru-rogue achieves its goal on being an improvement to~\citet{asperti18}`s simple navigation by being able to use items in game and fight monsters.
+    \subsection{Rainbow DQN}\label{subsec:rainbow-dqn}
 
-    For future developments of the model, we plan to use *** to *** because ***
+    \subsection{Summary}\label{subsec:summary}
 
-    \section{Reflection}\label{sec:reflection}
+    \section{Conclusion}\label{sec:conclusion}
+%    In this paper we have achieved the goal of being an improvement to~\citet{asperti18}`s tests by utilising a Rainbow
+%    DQN to perform dungeon crawling in Rogue's randomly generated dungeons.
+
+    % Explain where chizuru performed well, where it screwed up, and the most important aspect about it
+
+    \subsection{Results}\label{subsec:improvements}
+    % Talk about the neural network here
+    
+    \subsection{Future work}\label{subsec:future-work}
+    % Talk about using a customised neural network to run on Nethack or Angband
+%    \begin{figure}[ht]
+%        \caption{The structure of the Chizuru neural network *OUTDATED.} % TODO outdated
+%        \centering
+%        \includegraphics[scale=0.5]{network_structure}
+%        \label{fig:netwk}
+%    \end{figure}
+
+    \subsection{Summary}\label{subsec:summary4}
+
+    For future developments of the model, we plan to use\ldots
+    
+    \subsection{Reflection}\label{subsec:reflection}
 
     % Write some bollocks on how RL works well on video games and how this can lead to real-world developments with this technology.
 
+
+    %%%%% Everything after here is not counted in the word count. %%%%%
     \medskip
 
     \bibliographystyle{agsm}
@@ -326,11 +392,19 @@
     \medskip
 
     \appendix
+    \section*{Appendices}
+    \addcontentsline{toc}{section}{Appendices}
     \section{Methods}\label{sec:methods}
 
     \subsection{Neural Network}\label{subsec:neural-network2}
+%    \begin{lstlisting}[label={lst:thing}]
+%        if __name__ == "__main__":
+%            print("Hello, world!")
+%    \end{lstlisting}
 
     \subsection{State Representation}\label{subsec:state-representation}
+    The state of the game is represented as a 21x79 grid of ASCII characters as displayed to a human player, an example
+    of which is shown in Figure~\ref{fig:rogsc}.
 
     \subsection{Reward Representation}\label{subsec:reward-representation}
 
