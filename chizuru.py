@@ -13,12 +13,12 @@
 #  ██║  ██║╚██████╔╝╚██████╔╝╚██████╔╝███████╗
 #  ╚═╝  ╚═╝ ╚═════╝  ╚═════╝  ╚═════╝ ╚══════╝
 #
-# Some of the code here is inspired by the work of https://github.com/sebtheiler/tutorials/blob/main/dqn/train_dqn.py
+# Much of the code here is inspired by the work of https://github.com/sebtheiler/tutorials/blob/main/dqn/train_dqn.py
 
-"""This file contains everything needed to run the Chizuru AI."""
+"""This file contains everything needed to run the chizuru-rogue AI."""
 
 from rogue_gym.envs import RogueEnv
-from random import choice, random
+from random import choice, random, sample
 from collections import deque
 import tensorflow as tf
 import datetime
@@ -26,10 +26,8 @@ import numpy as np
 import itertools
 
 # Constants
-ASCII_CHARNUM = 128
-ENVIRONMENT = "rogueinabox"
 EPISODES_PER_INTERVAL = 500
-CKPT_PATH = "training/czr-{interval:04d}.ckpt"
+CKPT_PATH = "training/czr-{interval:04d}-{label}.ckpt"
 LOG_DIR = "logs/czr" + datetime.datetime.now().strftime("%Y-%m-%d--%H:%M:%S")
 ACTIONS = ['h', 'j', 'k', 'l', 'u', 'n', 'b', 'y', 's', '.']  # Movement actions, search and wait.
 
@@ -39,49 +37,97 @@ NUM_ITERATIONS = 20000
 MAX_TURNS_IN_EPISODE = 3000
 BATCH_SIZE = 64
 BUFFER_SIZE = 200000
-MIN_REPLAY_SIZE = 2000
+MIN_REPLAY_SIZE = 400
 EPSILON_START = 1.0
 EPSILON_END = 0.01
 EPSILON_DECAY = 150000
 LEARNING_RATE = 0.00001
-UPDATE_FREQUENCY = 10
+UPDATE_FREQUENCY = 5
 
 
 class Agent:
     """Contains everything needed to manage the agent."""
     def __init__(self, h, w):
+        self.h = h
+        self.w = w
         self.online_net = create_dueling_dqn(h, w)
         self.target_net = create_dueling_dqn(h, w)
+        self.replay_buffer = deque(maxlen=1000)
 
-    def get_action(self, e, observation):
+    def get_action(self, e):
         """Agent chooses an action."""
         rnd_sample = random()
 
+        history = [self.replay_buffer[-1][4].gray_image(),
+                   self.replay_buffer[-2][4].gray_image(),
+                   self.replay_buffer[-3][4].gray_image(),
+                   self.replay_buffer[-4][4].gray_image()]
+
+        history = tf.convert_to_tensor(history)
+
         if rnd_sample <= e:
             return choice(ACTIONS)
-        else:
-            return self.online_net.act(observation)
+        return self.online_net.predict(tf.reshape(history, (-1, 21, 79, 4)))[0].argmax()
 
     def update_target_network(self):
         """Updates target network with the online network."""
         self.target_net.set_weights(self.online_net.get_weights())
 
-    def learn(self, batch_size, gamma, turn_no):
+    def learn(self, batch_size, gamma):  # god, I'm so tired.
         """Learns from replays."""
-        pass
+        minibatch = sample(self.replay_buffer, batch_size)
+
+        states = tf.constant([r[0].gray_image() for r in minibatch])
+        actions = tf.constant([r[1] for r in minibatch])
+        rewards = tf.constant([r[2] for r in minibatch])
+        dones = tf.constant([r[3] for r in minibatch])
+        new_states = tf.constant([r[4].gray_image() for r in minibatch])
+
+        arg_q_max = self.online_net.predict(tf.reshape(new_states, (batch_size, 21, 79, 4))).argmax(axis=1)
+
+        future_q_vals = self.target_net.predict(tf.reshape(new_states, (batch_size, 21, 79, 4)))
+        double_q = future_q_vals[range(batch_size), arg_q_max]
+
+        target_q = rewards + (gamma * double_q * (1 - dones))
+
+        with tf.GradientTape() as tape:
+            q_values = self.online_net(states)
+
+            one_hot_actions = tf.keras.utils.to_categorical(actions, len(ACTIONS), dtype=np.float32)
+            Q = tf.reduce_sum(tf.multiply(q_values, one_hot_actions), axis=1)
+
+            error = Q - target_q
+            learn_loss = tf.keras.losses.Huber()(target_q, Q)
+
+            model_gradients = tape.gradient(learn_loss, self.online_net.trainable_variables)
+            self.online_net.optimizer.apply_gradients(model_gradients, self.online_net.trainable_variables)
+
+        return float(learn_loss.numpy()), error
+
+    def save(self, intr):
+        """Saves model at current interval."""
+        save_checkpoint(self.online_net, intr, "online")
+        save_checkpoint(self.target_net, interval, "target")
+
+    def load(self, intr):
+        """Loads model at given interval."""
+        self.online_net = load_checkpoint(self.online_net, intr, "online")
+        self.target_net = load_checkpoint(self.target_net, interval, "online")
 
 
-def create_dueling_dqn(h, w) -> tf.keras.Model:
+def reshape_state(state):
+    pass
+
+def create_dueling_dqn(h, w, history_length=4) -> tf.keras.Model:
     """Creates a Dueling DQN."""
-    net_input = tf.keras.Input(shape=(h, w), dtype=tf.float32)
+    net_input = tf.keras.Input(shape=(h, w, history_length))
+    net_input = tf.keras.layers.Lambda(lambda layer: layer / 255)(net_input)
 
-    conv1 = tf.keras.layers.Conv2D(32, (3, 3), activation="relu")(net_input)
-    mp1 = tf.keras.layers.MaxPooling2D((2, 2))(conv1)
-    conv2 = tf.keras.layers.Conv2D(64, (3, 3), activation="relu")(mp1)
-    mp2 = tf.keras.layers.MaxPooling2D((2, 2))(conv2)
-    conv3 = tf.keras.layers.Conv2D(64, (3, 3), activation="relu")(mp2)
+    conv1 = tf.keras.layers.Conv2D(32, (3, 3), strides=2, activation="relu")(net_input)
+    conv2 = tf.keras.layers.Conv2D(64, (3, 3), strides=1, activation="relu")(conv1)
+    conv3 = tf.keras.layers.Conv2D(64, (3, 3), strides=1, activation="relu")(conv2)
 
-    val, adv = tf.split(conv3, 2, 3)
+    val, adv = tf.keras.layers.Lambda(lambda w: tf.split(w, 2, 3))(conv3)
 
     val = tf.keras.layers.Flatten()(val)
     val = tf.keras.layers.Dense(1)(val)
@@ -93,10 +139,7 @@ def create_dueling_dqn(h, w) -> tf.keras.Model:
 
     output = tf.keras.layers.Add()([val, tf.keras.layers.Subtract()([adv, reduced(adv)])])
 
-    final_model = tf.keras.Model(
-        inputs=[input],
-        outputs=[output]
-    )
+    final_model = tf.keras.Model(net_input, output)
 
     final_model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE),
@@ -112,16 +155,16 @@ def create_rainbow_dqn(_h, _w):
     pass
 
 
-def save_checkpoint(model_sv: tf.keras.Model, interval) -> None:
+def save_checkpoint(model_sv: tf.keras.Model, interval, label) -> None:
     """Saves the model checkpoint with given interval."""
-    model_sv.save_weights(CKPT_PATH.format(interval=interval))
-    print("Episode " + str(interval) + " saved to " + CKPT_PATH.format(interval=interval) + "~")
+    model_sv.save_weights(CKPT_PATH.format(interval=interval, label=label))
+    print("Interval " + str(interval) + " saved to " + CKPT_PATH.format(interval=interval, label=label) + "~")
 
 
-def load_checkpoint(model_ld: tf.keras.Model, interval) -> tf.keras.Model:
+def load_checkpoint(model_ld: tf.keras.Model, interval, label) -> tf.keras.Model:
     """Loads a model checkpoint at a given interval. Returns the loaded model."""
-    model_ld.load_weights(CKPT_PATH)
-    print("File " + CKPT_PATH.format(interval=interval) + " loaded to current model~")
+    model_ld.load_weights(CKPT_PATH.format(interval=interval, label=label))
+    print("File " + CKPT_PATH.format(interval=interval, label=label) + " loaded to current model~")
     return model_ld
 
 
@@ -131,8 +174,6 @@ if __name__ == "__main__":
     tf.keras.utils.plot_model(agent.online_net, "stuff.png", show_shapes=True)
 
     writer = tf.summary.create_file_writer(LOG_DIR)
-
-    replay_buffer = deque(maxlen=500)
 
     CONFIG = {
         'width': 79, 'height': 21,
@@ -144,39 +185,57 @@ if __name__ == "__main__":
     }
     env = RogueEnv(max_steps=500, stair_reward=50.0, config_dict=CONFIG)
     episode_reward = 0
+    interval = 0
+    saved = True
+    episode = 0
     all_rewards = []
     all_losses = []
-    env.reset()
-    done = False
-    state, _, _, _ = env.step('.')
+    state = env.reset()
+    new_state, reward, done, _ = env.step('.')
+    for _ in range(4):
+        agent.replay_buffer.append((state, '.', reward, done, new_state))
 
     # Main processing
     try:
         with writer.as_default():
-            for episode in itertools.count():
-                for turn in itertools.count():
-                    epsilon = np.interp(turn, [0, EPSILON_DECAY], [EPSILON_START, EPSILON_END])
-                    action = agent.get_action(epsilon, state)
-                    new_state, reward, done, _ = env.step(action)
-                    episode_reward += reward
-                    all_rewards.append(reward)
+            for step in itertools.count():
+                epsilon = np.interp(step, [0, EPSILON_DECAY], [EPSILON_START, EPSILON_END])
+                action = agent.get_action(epsilon)
+                new_state, reward, done, _ = env.step(action)
+                episode_reward += reward
+                all_rewards.append(reward)
 
-                    transition = (state, action, reward, done, new_state)
-                    replay_buffer.append(transition)
-                    state = new_state
+                transition = (state, action, reward, done, new_state)
+                agent.replay_buffer.append(transition)
+                state = new_state
 
-                    # Learning step
-                    if turn % UPDATE_FREQUENCY == 0 and len(replay_buffer) > MIN_REPLAY_SIZE:
-                        loss, _ = agent.learn(BATCH_SIZE, GAMMA, turn)
-                        all_losses.append(loss)
+                # Learning step
+                if step % UPDATE_FREQUENCY == 0 and len(agent.replay_buffer) > MIN_REPLAY_SIZE:
+                    loss, _ = agent.learn(BATCH_SIZE, GAMMA)
+                    all_losses.append(loss)
 
-                    if done:
-                        env.reset()
-                        all_rewards.append(episode_reward)
-                        episode_reward = 0
-                        break
-                if episode % EPISODES_PER_INTERVAL && episode != 0:
-                    agent.
+                if step % UPDATE_FREQUENCY == 0 and step > MIN_REPLAY_SIZE:
+                    agent.update_target_network()
+
+                if done:
+                    dlvl = state.dungeon_level
+                    env.reset()
+                    all_rewards.append(episode_reward)
+                    tf.summary.scalar('Evaluation score', episode_reward, step)
+                    tf.summary.scalar('Dungeon level', dlvl, step)
+                    saved = False
+                    episode_reward = 0
+                    print('')
+                    print('Episode', episode)
+                    print('Average reward', np.mean(all_rewards))
+                    print('Epsilon', epsilon)
+                    episode += 1
+
+                if episode % EPISODES_PER_INTERVAL == 0 and not saved:
+                    agent.save(interval)
+                    interval += 1
+                    saved = True
+
 
     except KeyboardInterrupt:
         print("Exiting~")

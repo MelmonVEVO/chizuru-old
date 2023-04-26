@@ -19,7 +19,7 @@ If you want to run this locally, you need to use Python 3.7. Rogue-gym does not 
 ## Files
 The model is located in `chizuru.py`. The training file and logic is written in `train.py`, and the code for previewing how the AI plays is located in `preview.py`. Seeing is believing, after all.
 
-Chizuru saves its training checkpoints to `training/czr-xxxx.ckpt` where `xxxx` is the epoch number. It saves a new checkpoint every 5 epochs.
+Chizuru saves its training checkpoints every few episodes to `training/czr-xxxx.ckpt` where `xxxx` is the interval number. It saves a new checkpoint every 500 episodes.
 
 ## Bugs
 Probably infinite (although countably infinite). However, the distant screams of your PC and/or GPU cloud running this model is *not* a bug. It's a feature.
