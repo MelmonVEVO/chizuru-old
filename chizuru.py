@@ -1,5 +1,3 @@
-# This code is governed under the GNU General Public Licence v3.0.
-#
 #   ██████╗██╗  ██╗██╗███████╗██╗   ██╗██████╗ ██╗   ██╗
 #  ██╔════╝██║  ██║██║╚══███╔╝██║   ██║██╔══██╗██║   ██║
 #  ██║     ███████║██║  ███╔╝ ██║   ██║██████╔╝██║   ██║
@@ -13,12 +11,13 @@
 #  ██║  ██║╚██████╔╝╚██████╔╝╚██████╔╝███████╗
 #  ╚═╝  ╚═╝ ╚═════╝  ╚═════╝  ╚═════╝ ╚══════╝
 #
-# Much of the code here is inspired by the work of https://github.com/sebtheiler/tutorials/blob/main/dqn/train_dqn.py
+# Much of the code here is inspired by the work of https://github.com/sebtheiler/tutorials/blob/main/dqn/train_dqn.py,
+# especially the code for agent learning.
 
 """This file contains everything needed to run the chizuru-rogue AI."""
 
 from rogue_gym.envs import RogueEnv
-from random import choice, random, sample
+from random import random, sample, randint
 from collections import deque
 import tensorflow as tf
 import datetime
@@ -26,7 +25,7 @@ import numpy as np
 import itertools
 
 # Constants
-EPISODES_PER_INTERVAL = 500
+EPISODES_PER_INTERVAL = 100
 CKPT_PATH = "training/czr-{interval:04d}-{label}.ckpt"
 LOG_DIR = "logs/czr" + datetime.datetime.now().strftime("%Y-%m-%d--%H:%M:%S")
 ACTIONS = ['h', 'j', 'k', 'l', 'u', 'n', 'b', 'y', 's', '.']  # Movement actions, search and wait.
@@ -34,7 +33,7 @@ ACTIONS = ['h', 'j', 'k', 'l', 'u', 'n', 'b', 'y', 's', '.']  # Movement actions
 # Hyperparameters
 GAMMA = 0.99
 NUM_ITERATIONS = 20000
-MAX_TURNS_IN_EPISODE = 3000
+MAX_TURNS_IN_EPISODE = 1000
 BATCH_SIZE = 64
 BUFFER_SIZE = 200000
 MIN_REPLAY_SIZE = 400
@@ -42,7 +41,7 @@ EPSILON_START = 1.0
 EPSILON_END = 0.01
 EPSILON_DECAY = 150000
 LEARNING_RATE = 0.00001
-UPDATE_FREQUENCY = 5
+UPDATE_FREQUENCY = 1000
 
 
 class Agent:
@@ -52,22 +51,15 @@ class Agent:
         self.w = w
         self.online_net = create_dueling_dqn(h, w)
         self.target_net = create_dueling_dqn(h, w)
-        self.replay_buffer = deque(maxlen=1000)
+        self.replay_buffer = deque(maxlen=BUFFER_SIZE)
 
-    def get_action(self, e):
+    def get_action(self, s, e):
         """Agent chooses an action."""
         rnd_sample = random()
 
-        history = [self.replay_buffer[-1][4].gray_image(),
-                   self.replay_buffer[-2][4].gray_image(),
-                   self.replay_buffer[-3][4].gray_image(),
-                   self.replay_buffer[-4][4].gray_image()]
-
-        history = tf.convert_to_tensor(history)
-
         if rnd_sample <= e:
-            return choice(ACTIONS)
-        return self.online_net.predict(tf.reshape(history, (-1, 21, 79, 4)))[0].argmax()
+            return randint(0, len(ACTIONS)-1)
+        return self.online_net.predict(tf.reshape(tf.convert_to_tensor(s), (-1, 21, 79, 1)))[0].argmax()
 
     def update_target_network(self):
         """Updates target network with the online network."""
@@ -75,59 +67,56 @@ class Agent:
 
     def learn(self, batch_size, gamma):  # god, I'm so tired.
         """Learns from replays."""
-        minibatch = sample(self.replay_buffer, batch_size)
+        minibatch = sample(self.replay_buffer, BATCH_SIZE)
 
-        states = tf.constant([r[0].gray_image() for r in minibatch])
+        states = tf.constant([r[0] for r in minibatch])
         actions = tf.constant([r[1] for r in minibatch])
         rewards = tf.constant([r[2] for r in minibatch])
         dones = tf.constant([r[3] for r in minibatch])
-        new_states = tf.constant([r[4].gray_image() for r in minibatch])
+        new_states = tf.constant([r[4] for r in minibatch])
 
-        arg_q_max = self.online_net.predict(tf.reshape(new_states, (batch_size, 21, 79, 4))).argmax(axis=1)
+        arg_q_max = self.online_net.predict(tf.reshape(new_states, (batch_size, 21, 79, 1))).argmax(axis=1)
 
-        future_q_vals = self.target_net.predict(tf.reshape(new_states, (batch_size, 21, 79, 4)))
+        future_q_vals = self.target_net.predict(tf.reshape(new_states, (batch_size, 21, 79, 1)))
         double_q = future_q_vals[range(batch_size), arg_q_max]
 
-        target_q = rewards + (gamma * double_q * (1 - dones))
+        target_q = tf.cast(rewards, tf.float32) + (gamma * double_q * (1.0 - tf.cast(dones, tf.float32)))
 
         with tf.GradientTape() as tape:
-            q_values = self.online_net(states)
+            q_values = self.online_net(tf.reshape(states, (batch_size, 21, 79, 1)))
 
             one_hot_actions = tf.keras.utils.to_categorical(actions, len(ACTIONS), dtype=np.float32)
-            Q = tf.reduce_sum(tf.multiply(q_values, one_hot_actions), axis=1)
+            q = tf.reduce_sum(tf.multiply(q_values, one_hot_actions), axis=1)
 
-            error = Q - target_q
-            learn_loss = tf.keras.losses.Huber()(target_q, Q)
+            error = q - target_q
+            learn_loss = tf.keras.losses.Huber()(target_q, q)
 
             model_gradients = tape.gradient(learn_loss, self.online_net.trainable_variables)
-            self.online_net.optimizer.apply_gradients(model_gradients, self.online_net.trainable_variables)
+            self.online_net.optimizer.apply_gradients(zip(model_gradients, self.online_net.trainable_variables))
 
         return float(learn_loss.numpy()), error
 
-    def save(self, intr):
+    def save(self, interval):
         """Saves model at current interval."""
         save_checkpoint(self.online_net, intr, "online")
         save_checkpoint(self.target_net, interval, "target")
 
-    def load(self, intr):
+    def load(self, interval):
         """Loads model at given interval."""
         self.online_net = load_checkpoint(self.online_net, intr, "online")
         self.target_net = load_checkpoint(self.target_net, interval, "online")
 
 
-def reshape_state(state):
-    pass
-
-def create_dueling_dqn(h, w, history_length=4) -> tf.keras.Model:
+def create_dueling_dqn(h, w) -> tf.keras.Model:
     """Creates a Dueling DQN."""
-    net_input = tf.keras.Input(shape=(h, w, history_length))
+    net_input = tf.keras.Input(shape=(h, w, 1))
     net_input = tf.keras.layers.Lambda(lambda layer: layer / 255)(net_input)
 
     conv1 = tf.keras.layers.Conv2D(32, (3, 3), strides=2, activation="relu")(net_input)
     conv2 = tf.keras.layers.Conv2D(64, (3, 3), strides=1, activation="relu")(conv1)
     conv3 = tf.keras.layers.Conv2D(64, (3, 3), strides=1, activation="relu")(conv2)
 
-    val, adv = tf.keras.layers.Lambda(lambda w: tf.split(w, 2, 3))(conv3)
+    val, adv = tf.keras.layers.Lambda(lambda ww: tf.split(ww, 2, 3))(conv3)
 
     val = tf.keras.layers.Flatten()(val)
     val = tf.keras.layers.Dense(1)(val)
@@ -135,7 +124,7 @@ def create_dueling_dqn(h, w, history_length=4) -> tf.keras.Model:
     adv = tf.keras.layers.Flatten()(adv)
     adv = tf.keras.layers.Dense(len(ACTIONS))(adv)
 
-    reduced = tf.keras.layers.Lambda(lambda w: tf.reduce_mean(w, axis=1, keepdims=True))
+    reduced = tf.keras.layers.Lambda(lambda ww: tf.reduce_mean(ww, axis=1, keepdims=True))
 
     output = tf.keras.layers.Add()([val, tf.keras.layers.Subtract()([adv, reduced(adv)])])
 
@@ -183,9 +172,9 @@ if __name__ == "__main__":
         },
         'enemies': []
     }
-    env = RogueEnv(max_steps=500, stair_reward=50.0, config_dict=CONFIG)
+    env = RogueEnv(max_steps=MAX_TURNS_IN_EPISODE, stair_reward=50.0, config_dict=CONFIG)
     episode_reward = 0
-    interval = 0
+    intr = 0
     saved = True
     episode = 0
     all_rewards = []
@@ -193,19 +182,20 @@ if __name__ == "__main__":
     state = env.reset()
     new_state, reward, done, _ = env.step('.')
     for _ in range(4):
-        agent.replay_buffer.append((state, '.', reward, done, new_state))
+        agent.replay_buffer.append((state.gray_image(), 9, reward, done, new_state.gray_image()))
+    state = new_state
 
     # Main processing
     try:
         with writer.as_default():
             for step in itertools.count():
                 epsilon = np.interp(step, [0, EPSILON_DECAY], [EPSILON_START, EPSILON_END])
-                action = agent.get_action(epsilon)
-                new_state, reward, done, _ = env.step(action)
+                action = agent.get_action(state.gray_image(), epsilon)
+                new_state, reward, done, _ = env.step(ACTIONS[action])
                 episode_reward += reward
                 all_rewards.append(reward)
 
-                transition = (state, action, reward, done, new_state)
+                transition = (state.gray_image(), action, reward, done, new_state.gray_image())
                 agent.replay_buffer.append(transition)
                 state = new_state
 
@@ -232,10 +222,9 @@ if __name__ == "__main__":
                     episode += 1
 
                 if episode % EPISODES_PER_INTERVAL == 0 and not saved:
-                    agent.save(interval)
-                    interval += 1
+                    agent.save(intr)
+                    intr += 1
                     saved = True
-
 
     except KeyboardInterrupt:
         print("Exiting~")

@@ -205,7 +205,7 @@
     Once the agent performs an action, it receives the new game state as well as a \emph{reward} signal, telling the agent how good its choice was.
 
     \begin{figure}[ht]
-        \caption[The reinforcement learning loop.]{The reinforcement learning loop. An agent is provided with a state, performs an action and is provided with a reward signal and the resulting state. Image credit: \citet{bhattrl}}
+        \caption[The reinforcement learning loop.]{The reinforcement learning loop. An agent is provided with a state, performs an action and is provided with a reward signal and the resulting state. Image credit~\citet{bhattrl}}
         \centering
         \includegraphics[scale=0.4]{rlgraph}
         \label{fig:rlgraph}
@@ -344,8 +344,10 @@
 
     The agent was trained and evaluated on multiple Nvidia GeForce RTX 2080 graphics cards using CUDA.
 
+    Much of our code was inspired by the work of~\citet{sebtheiler}.
+
     During our training of the agent, we measured the agent's performance with the following criteria after every run:
-    Much of our code was inspired by the work of~\citet{sebtheiler}
+
     \begin{itemize}
         \item The final score the agent achieved per episode (total reward)
         \item The deepest dungeon level the agent entered
