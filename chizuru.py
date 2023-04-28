@@ -25,7 +25,7 @@ import numpy as np
 import itertools
 
 # Constants
-EPISODES_PER_INTERVAL = 100
+STEPS_PER_INTERVAL = 10000
 CKPT_PATH = "training/czr-{interval:04d}-{label}.ckpt"
 LOG_DIR = "logs/czr" + datetime.datetime.now().strftime("%Y-%m-%d--%H:%M:%S")
 ACTIONS = ['h', 'j', 'k', 'l', 'u', 'n', 'b', 'y', 's', '.']  # Movement actions, search and wait.
@@ -34,9 +34,9 @@ ACTIONS = ['h', 'j', 'k', 'l', 'u', 'n', 'b', 'y', 's', '.']  # Movement actions
 GAMMA = 0.99
 NUM_ITERATIONS = 20000
 MAX_TURNS_IN_EPISODE = 1000
-BATCH_SIZE = 64
+BATCH_SIZE = 32
 BUFFER_SIZE = 200000
-MIN_REPLAY_SIZE = 400
+MIN_REPLAY_SIZE = 1500
 EPSILON_START = 1.0
 EPSILON_END = 0.01
 EPSILON_DECAY = 150000
@@ -160,8 +160,6 @@ def load_checkpoint(model_ld: tf.keras.Model, interval, label) -> tf.keras.Model
 if __name__ == "__main__":
     agent = Agent(21, 79)
 
-    tf.keras.utils.plot_model(agent.online_net, "stuff.png", show_shapes=True)
-
     writer = tf.summary.create_file_writer(LOG_DIR)
 
     CONFIG = {
@@ -172,10 +170,9 @@ if __name__ == "__main__":
         },
         'enemies': []
     }
-    env = RogueEnv(max_steps=MAX_TURNS_IN_EPISODE, stair_reward=50.0, config_dict=CONFIG)
+    env = RogueEnv(max_steps=MAX_TURNS_IN_EPISODE, stair_reward=100.0, config_dict=CONFIG)
     episode_reward = 0
     intr = 0
-    saved = True
     episode = 0
     all_rewards = []
     all_losses = []
@@ -213,23 +210,21 @@ if __name__ == "__main__":
                     all_rewards.append(episode_reward)
                     tf.summary.scalar('Evaluation score', episode_reward, step)
                     tf.summary.scalar('Dungeon level', dlvl, step)
-                    saved = False
-                    episode_reward = 0
-                    print('')
-                    print('Episode', episode)
-                    print('Average reward', np.mean(all_rewards))
+                    print('\nEpisode', episode)
+                    print('Reward this game', episode_reward)
+                    print('Average reward this session', np.mean(all_rewards))
                     print('Epsilon', epsilon)
+                    episode_reward = 0
                     episode += 1
 
-                if episode % EPISODES_PER_INTERVAL == 0 and not saved:
+                if step % STEPS_PER_INTERVAL == 0 and step > 0:
+                    print('\nInterval', intr)
                     agent.save(intr)
                     intr += 1
-                    saved = True
 
     except KeyboardInterrupt:
         print("Exiting~")
         writer.close()
-
     env.close()
 
 

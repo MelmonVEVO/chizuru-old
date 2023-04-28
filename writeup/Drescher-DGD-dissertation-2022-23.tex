@@ -78,7 +78,7 @@
         Rogue offers a unique problem to solve, requiring a player to solve partially observable, randomly generated levels.
 
         \noindent chizuru-rouge interfaces with a program called Rogue-gym, a program that accurately mimics the gameplay of Rogue and
-        the agent utilises a Rainbow Deep Q-network to explore the dungeon collect gold and reach the goal of collecting the Amulet of Yendor. % customised neural network that involves an LSTM for long-term and short-term memory to explore levels in Rogue
+        the agent utilises a Rainbow Deep Q-network to explore the dungeon, collect gold and reach the goal of collecting the Amulet of Yendor. % customised neural network that involves an LSTM for long-term and short-term memory to explore levels in Rogue
 
         \noindent TensorFlow will be used as a framework to implement the reinforcement learning agent.
         TensorFlow is a Python library that provides tools to streamline development of deep learning models.
@@ -119,7 +119,7 @@
     The hope is chizuru-rogue will be able to play the game to a level where it can reach the Amulet of Yendor, the goal of the game.
 
     Should the project prove successful, it can serve as a foundation for creating AI to play more complex
-    roguelike games like NetHack\footnote{https://nethackwiki.com/wiki/NetHack}.
+    roguelike games like NetHack\footnote{\url{https://nethackwiki.com/wiki/NetHack}}.
 
     \subsection{Rogue - the game}\label{subsec:rogue}
     \subsubsection{Objective}\label{subsubsec:objective}
@@ -213,7 +213,7 @@
 
     The purpose of rewards is for the agent to constantly estimate a \emph{value function}.
     This function tells the agent either how profitable being in a certain state and following its policy is, or how profitable taking a certain action then following its policy is.
-    The theory is that the agent should aim to maximise its reward over the long term.
+    The theory is that the agent should aim to maximise its cumulative reward by tuning its policy in order to achieve this.
 
     \subsubsection{Q-learning}
     One of the most well-known reinforcement learning algorithms is the Q-learning algorithm~\citep[chap.~6.5]{sutton18}.
@@ -226,7 +226,7 @@
     This means the optimal value of taking action \(a\) in state \(s\) is the expected reward of taking the action and then following the policy from there.
 
     \subsection{Deep Learning}\label{subsec:deep-learning}
-    Deep learning is a method of artificial intelligence that involves the use of deep neural networks to process data in a way inspired by the human brain. % TODO improve and make sure not plagiarising
+    Deep learning is a method of artificial intelligence that involves the use of deep neural networks to process data in a way inspired by the human brain. % TODO improve introductory paragraph and make sure not plagiarising
     
     Representing Q-values containing every state-action pairing becomes infeasible in large state spaces such as video
     games, requiring ever expanding tables and computational space needed to store them.
@@ -236,14 +236,15 @@
 
     The Deep Q-network in their writing was shown to play several Atari games to a superhuman level, most notably Video Pinball and Boxing.
     A similar algorithm involving neural networks was employed by~\citet{silver16} in their development of the AlphaGo system, an agent that was found to beat human grandmaster players in the game of Go.
-    The authors used a convolutional neural network alongside ``policy gradient'' reinforcement learning, which is where % TODO continue
+    The authors used a convolutional neural network alongside ``policy gradient'' reinforcement learning, which is where gradient descent is used to derive a policy.
 
     While the DQN algorithm by itself is serviceable for simpler problem domains such as Atari, there have been improvements to tackle more challenging domains.
-    One of the first improvements to the DQN algorithm is the Double DQN~\citep{hasselt15}.
-    Double DQN improves on the original DQN by using a current network for selecting actions, and then training a ``target network''
-    to calculate the target Q-value of said action.
+    One of the first improvements to the DQN algorithm is the Double DQN~\citep{hasselt15}, which improves on the original DQN by using a current network for selecting actions
+    and then training a ``target network'' to calculate the target Q-value of said action.
     This improves on the original DQN by solving an issue the original DQN had that the Double DQN paper explains in detail,
-    where the original DQN suffered from ``substantial overestimations'' when playing Atari games.
+    where the original DQN suffered from ``substantial overestimations'' when playing Atari games, leading to poorer derived policies due to the fact that
+    DQN (and standard Q-learning) uses the save max value for selecting and evaluating an action.
+    Using a target network decouples selection from evaluation, according to the paper.
 
     This is further improved with the Dueling DQN~\citep{wang16}.
     Dueling DQN works by splitting the existing DQN network into two streams: a state-value stream and an ``advantage'' stream.
@@ -262,7 +263,6 @@
     This solves the problem that traditional neural networks have, where they can't store information that can be useful to them in the long term.
 
     \subsection{Exploring Rogue}\label{subsec:exploring-rogue}
-
     The first notable instance of a program being developed to play Rogue was by~\citet{mauldin83}, where they created ``ROG-O-MATIC'', an expert system that plays Rogue.
     An expert system, as stated by~\citet{jackson86} in their book's introduction, ``is a computing system capable of representing and reasoning about some knowledge-rich domain''.
     Essentially, these systems aim to emulate a human expert in a particular domain and their decision-making.
@@ -279,6 +279,8 @@
     While the previous implementation employed a DQN, the agent in the improvement implemented an A3C~\citep{mnih15}\footnote{Asynchronous Advantage Actor Critic, an asynchronous algorithm that aims to optimise a policy and estimate a value function by training multiple actors in parallel.} algorithm as a base, rather than a DQN. The A3C algorithm in the improvement was partitioned, meaning the sample space is \emph{partitioned} into a set of situations.
     This allows the different agents that run simultaneously to learn from different situations to build a common cumulative reward.
     It also involves the work by~\citet{jaderberg16}.
+
+    % TODO talk about rogue-gym here
 
     \subsection{Exploring Other Roguelikes}\label{subsec:exploring-other-roguelikes}
     Rogue is not the only roguelike that has been explored with machine learning.
@@ -313,6 +315,7 @@
     Additionally, the player may see what the item-key mapping is by viewing their inventory with the \texttt{i} key at any time.
 
     \subsection{Neural Network}\label{subsec:neural-network}
+    % TODO How are you going to compare Dueling DQN and Rainbow DQN? Is there a metric or multiple metrics? The tradeoff between metrics? Are they standard or ad hoc?
     The agent in our experiments will first utilise a Dueling DQN, then utilise a Rainbow DQN as described in the report by~\citet{hessel17}.
     The following techniques make up the Rainbow DQN:
     \begin{itemize}
@@ -327,6 +330,7 @@
         \item \textbf{Distributional RL}: approximating distributions of returns rather than expected returns.
         \item \textbf{Noisy Networks}: applying random noise to the neural network's parameters in order to avoid overfitting.
     \end{itemize}
+    % TODO write about the benefits and drawbacks of both dueling and rainbow
 
     \subsection{Agent Implementation}\label{subsec:implementation}
     The agent will be implemented in Python, which is one of the most popular languages used to model neural networks due to its many AI-related libraries that are available, including TensorFlow, which is what we use.
@@ -337,11 +341,9 @@
     Rogue-gym is a game that accurately replicates the gameplay of Rogue while also allowing customisation of the game.
     It also comes with a customised OpenAI Gym environment which allows AI agents written in Python to interact with the game.
 
-    \subsection{Summary}\label{subsec:summary2} % TODO
+    \subsection{Summary}\label{subsec:summary2} % TODO add
 
     \section{Agent Training and Results}\label{sec:agent-training-and-results}  % TODO things here after data collection
-    \textbf{--- Everything below here is unfinished. ---}
-
     The agent was trained and evaluated on multiple Nvidia GeForce RTX 2080 graphics cards using CUDA.
 
     Much of our code was inspired by the work of~\citet{sebtheiler}.
@@ -360,15 +362,17 @@
     \subsection{Summary}\label{subsec:summary}
 
     \section{Conclusion}\label{sec:conclusion}
-    In this paper we have achieved the goal of being an improvement to~\citet{asperti18}`s tests by utilising a Rainbow
-    DQN to perform dungeon crawling in Rogue's randomly generated dungeons.
+    In this paper we have set out to improve upon to~\citet{asperti18}`s tests by utilising a Rainbow
+    DQN to perform dungeon crawling in Rogue's randomly generated dungeons, while also using a Dueling DQN in order to
+    provide a perspective on the performance on the Rainbow DQN.
 
     % Explain where chizuru performed well, where it screwed up, and the most important aspect about it
 
-    \subsection{Results}\label{subsec:improvements}
     % Talk about the neural network here
     
     \subsection{Future work}\label{subsec:future-work}
+    While
+
     % Talk about using a customised neural network to run on Nethack or Angband
 %    \begin{figure}[ht]
 %        \caption{The structure of the Chizuru neural network *OUTDATED.} % TODO outdated
@@ -378,8 +382,7 @@
 %    \end{figure}
 
     \subsection{Summary}\label{subsec:summary4}
-
-    For future developments of the model, we plan to use\ldots
+    In summary, this project was able to
     
     \subsection{Reflection}\label{subsec:reflection}
 
@@ -410,13 +413,67 @@
     of which is shown in Figure~\ref{fig:rogsc}.
 
     \subsection{Reward Representation}\label{subsec:reward-representation}
+    The reward signals are as follows
+    \begin{itemize}
+        \item Reward per movement: 0
+        \item Reward for collecting gold: based on gold collected
+        \item Reward for descending stairs: 50
+    \end{itemize}
 
     \subsection{Hyperparameters}\label{subsec:hyperparameters}
+    \begin{lstlisting}[label={lst:hyperparameters}]
+        GAMMA = 0.99
+        NUM_ITERATIONS = 20000
+        MAX_TURNS_IN_EPISODE = 1000
+        BATCH_SIZE = 64
+        BUFFER_SIZE = 200000
+        MIN_REPLAY_SIZE = 400
+        EPSILON_START = 1.0
+        EPSILON_END = 0.01
+        EPSILON_DECAY = 150000
+        LEARNING_RATE = 0.00001
+        UPDATE_FREQUENCY = 1000
+    \end{lstlisting}
 
+    \subsection{Network Architecture}
+    \subsubsection{Dueling DQN}
+    \begin{lstlisting}[label={lst:dueling}]
+    net_input = tf.keras.Input(shape=(h, w, 1))
+    net_input = tf.keras.layers.Lambda(lambda layer: layer / 255)(net_input)
+
+    conv1 = tf.keras.layers.Conv2D(32, (3, 3), strides=2, activation="relu")(net_input)
+    conv2 = tf.keras.layers.Conv2D(64, (3, 3), strides=1, activation="relu")(conv1)
+    conv3 = tf.keras.layers.Conv2D(64, (3, 3), strides=1, activation="relu")(conv2)
+
+    val, adv = tf.keras.layers.Lambda(lambda ww: tf.split(ww, 2, 3))(conv3)
+
+    val = tf.keras.layers.Flatten()(val)
+    val = tf.keras.layers.Dense(1)(val)
+
+    adv = tf.keras.layers.Flatten()(adv)
+    adv = tf.keras.layers.Dense(len(ACTIONS))(adv)
+
+    reduced = tf.keras.layers.Lambda(lambda ww: tf.reduce_mean(ww, axis=1, keepdims=True))
+
+    output = tf.keras.layers.Add()([val, tf.keras.layers.Subtract()([adv, reduced(adv)])])
+
+    final_model = tf.keras.Model(net_input, output)
+
+    final_model.compile(
+        optimizer=tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE),
+        loss=tf.keras.losses.MeanSquaredError(),
+        metrics=[tf.keras.metrics.SparseCategoricalAccuracy()]
+    )
+
+    return final_model
+    \end{lstlisting} % XXX do i need to cite this?
+
+
+    \subsubsection{Rainbow DQN}
 
     \section{Results}\label{sec:results}
+    \subsection{Dueling DQN}\label{subsec:dueling-dqn2}
 
-
-    \section{Data}\label{sec:data}
+    \subsection{Rainbow DQN}\label{subsec:rainbow-dqn2}
 
 \end{document}
