@@ -33,7 +33,7 @@ ACTIONS = ['h', 'j', 'k', 'l', 'u', 'n', 'b', 'y', 's', '.']  # Movement actions
 # Hyperparameters
 GAMMA = 0.99
 NUM_ITERATIONS = 20000
-MAX_TURNS_IN_EPISODE = 1000
+MAX_TURNS_IN_EPISODE = 1500
 BATCH_SIZE = 32
 BUFFER_SIZE = 200000
 MIN_REPLAY_SIZE = 1500
@@ -41,7 +41,7 @@ EPSILON_START = 1.0
 EPSILON_END = 0.01
 EPSILON_DECAY = 150000
 LEARNING_RATE = 0.00001
-UPDATE_FREQUENCY = 1000
+UPDATE_FREQUENCY = 750
 
 
 class Agent:
@@ -112,9 +112,12 @@ def create_dueling_dqn(h, w) -> tf.keras.Model:
     net_input = tf.keras.Input(shape=(h, w, 1))
     # net_input = tf.keras.layers.Lambda(lambda layer: layer / 255)(net_input)
 
-    conv1 = tf.keras.layers.Conv2D(32, (3, 3), strides=2, activation="relu", use_bias=False, kernel_initializer=tf.keras.initializers.VarianceScaling(scale=2.))(net_input)
-    conv2 = tf.keras.layers.Conv2D(64, (3, 3), strides=1, activation="relu", use_bias=False, kernel_initializer=tf.keras.initializers.VarianceScaling(scale=2.))(conv1)
-    conv3 = tf.keras.layers.Conv2D(64, (3, 3), strides=1, activation="relu", use_bias=False, kernel_initializer=tf.keras.initializers.VarianceScaling(scale=2.))(conv2)
+    conv1 = tf.keras.layers.Conv2D(32, (3, 3), strides=2, activation="relu", use_bias=False,
+                                   kernel_initializer=tf.keras.initializers.VarianceScaling(scale=2.))(net_input)
+    conv2 = tf.keras.layers.Conv2D(64, (3, 3), strides=1, activation="relu", use_bias=False,
+                                   kernel_initializer=tf.keras.initializers.VarianceScaling(scale=2.))(conv1)
+    conv3 = tf.keras.layers.Conv2D(64, (3, 3), strides=1, activation="relu", use_bias=False,
+                                   kernel_initializer=tf.keras.initializers.VarianceScaling(scale=2.))(conv2)
 
     val, adv = tf.keras.layers.Lambda(lambda ww: tf.split(ww, 2, 3))(conv3)
 
@@ -204,12 +207,15 @@ if __name__ == "__main__":
                 if step % UPDATE_FREQUENCY == 0 and step > MIN_REPLAY_SIZE:
                     agent.update_target_network()
 
+                tf.summary.scalar('Loss', step)
+                tf.summary.scalar('Rewards per step', step)
+
                 if done:
                     dlvl = state.dungeon_level
                     env.reset()
                     all_rewards.append(episode_reward)
-                    tf.summary.scalar('Evaluation score', episode_reward, step)
-                    tf.summary.scalar('Dungeon level', dlvl, step)
+                    tf.summary.scalar('Evaluation score', episode_reward, episode)
+                    tf.summary.scalar('Dungeon level', dlvl, episode)
                     print('\nEpisode', episode)
                     print('Reward this game', episode_reward)
                     print('Average reward current interval', np.mean(all_rewards))
@@ -220,7 +226,7 @@ if __name__ == "__main__":
                 if step % STEPS_PER_INTERVAL == 0 and step > 0:
                     print('\nInterval', intr)
                     agent.save(intr)
-                    tf.summary.scalar('Interval score', np.mean(all_rewards), step)
+                    tf.summary.scalar('Interval score', np.mean(all_rewards), intr)
                     all_rewards = []
                     intr += 1
 
