@@ -33,7 +33,7 @@ ACTIONS = ['h', 'j', 'k', 'l', 'u', 'n', 'b', 'y', 's', '.']  # Movement actions
 # Hyperparameters
 GAMMA = 0.99
 NUM_ITERATIONS = 20000
-MAX_TURNS_IN_EPISODE = 1500
+MAX_TURNS_IN_EPISODE = 1250
 BATCH_SIZE = 32
 BUFFER_SIZE = 200000
 MIN_REPLAY_SIZE = 1500
@@ -41,7 +41,8 @@ EPSILON_START = 1.0
 EPSILON_END = 0.01
 EPSILON_DECAY = 150000
 LEARNING_RATE = 0.00001
-UPDATE_FREQUENCY = 750
+LEARNING_FREQUENCY = 75
+TARGET_UPDATE_FREQUENCY = 750
 
 
 class Agent:
@@ -178,7 +179,6 @@ if __name__ == "__main__":
     intr = 0
     episode = 0
     all_rewards = []
-    all_losses = []
     state = env.reset()
     new_state, reward, done, _ = env.step('.')
     for _ in range(4):
@@ -200,15 +200,14 @@ if __name__ == "__main__":
                 state = new_state
 
                 # Learning step
-                if step % UPDATE_FREQUENCY == 0 and len(agent.replay_buffer) > MIN_REPLAY_SIZE:
+                if step % LEARNING_FREQUENCY == 0 and len(agent.replay_buffer) > MIN_REPLAY_SIZE:
                     loss, _ = agent.learn(BATCH_SIZE, GAMMA)
-                    all_losses.append(loss)
+                    tf.summary.scalar('Loss', loss, step)
 
-                if step % UPDATE_FREQUENCY == 0 and step > MIN_REPLAY_SIZE:
+                if step % TARGET_UPDATE_FREQUENCY == 0 and step > MIN_REPLAY_SIZE:
                     agent.update_target_network()
 
-                tf.summary.scalar('Loss', step)
-                tf.summary.scalar('Rewards per step', step)
+                tf.summary.scalar('Rewards per step', reward, step)
 
                 if done:
                     dlvl = state.dungeon_level
@@ -216,10 +215,10 @@ if __name__ == "__main__":
                     all_rewards.append(episode_reward)
                     tf.summary.scalar('Evaluation score', episode_reward, episode)
                     tf.summary.scalar('Dungeon level', dlvl, episode)
-                    print('\nEpisode', episode)
+                    print('Episode', episode, 'done.')
                     print('Reward this game', episode_reward)
                     print('Average reward current interval', np.mean(all_rewards))
-                    print('Epsilon', epsilon)
+                    print('Epsilon', epsilon, '\n')
                     episode_reward = 0
                     episode += 1
 
