@@ -89,7 +89,7 @@ class Agent:
             q = tf.reduce_sum(tf.multiply(q_values, one_hot_actions), axis=1)
 
             error = q - target_q
-            learn_loss = tf.keras.losses.Huber()(target_q, q)
+            learn_loss = tf.keras.losses.MeanSquaredError()(target_q, q)
 
             model_gradients = tape.gradient(learn_loss, self.online_net.trainable_variables)
             self.online_net.optimizer.apply_gradients(zip(model_gradients, self.online_net.trainable_variables))
@@ -110,19 +110,19 @@ class Agent:
 def create_dueling_dqn(h, w) -> tf.keras.Model:
     """Creates a Dueling DQN."""
     net_input = tf.keras.Input(shape=(h, w, 1))
-    net_input = tf.keras.layers.Lambda(lambda layer: layer / 255)(net_input)
+    # net_input = tf.keras.layers.Lambda(lambda layer: layer / 255)(net_input)
 
-    conv1 = tf.keras.layers.Conv2D(32, (3, 3), strides=2, activation="relu")(net_input)
-    conv2 = tf.keras.layers.Conv2D(64, (3, 3), strides=1, activation="relu")(conv1)
-    conv3 = tf.keras.layers.Conv2D(64, (3, 3), strides=1, activation="relu")(conv2)
+    conv1 = tf.keras.layers.Conv2D(32, (3, 3), strides=2, activation="relu", use_bias=False, kernel_initializer=tf.keras.initializers.VarianceScaling(scale=2.))(net_input)
+    conv2 = tf.keras.layers.Conv2D(64, (3, 3), strides=1, activation="relu", use_bias=False, kernel_initializer=tf.keras.initializers.VarianceScaling(scale=2.))(conv1)
+    conv3 = tf.keras.layers.Conv2D(64, (3, 3), strides=1, activation="relu", use_bias=False, kernel_initializer=tf.keras.initializers.VarianceScaling(scale=2.))(conv2)
 
     val, adv = tf.keras.layers.Lambda(lambda ww: tf.split(ww, 2, 3))(conv3)
 
     val = tf.keras.layers.Flatten()(val)
-    val = tf.keras.layers.Dense(1)(val)
+    val = tf.keras.layers.Dense(1, kernel_initializer=tf.keras.initializers.VarianceScaling(scale=2.))(val)
 
     adv = tf.keras.layers.Flatten()(adv)
-    adv = tf.keras.layers.Dense(len(ACTIONS))(adv)
+    adv = tf.keras.layers.Dense(len(ACTIONS), kernel_initializer=tf.keras.initializers.VarianceScaling(scale=2.))(adv)
 
     reduced = tf.keras.layers.Lambda(lambda ww: tf.reduce_mean(ww, axis=1, keepdims=True))
 
@@ -212,7 +212,7 @@ if __name__ == "__main__":
                     tf.summary.scalar('Dungeon level', dlvl, step)
                     print('\nEpisode', episode)
                     print('Reward this game', episode_reward)
-                    print('Average reward this session', np.mean(all_rewards))
+                    print('Average reward current interval', np.mean(all_rewards))
                     print('Epsilon', epsilon)
                     episode_reward = 0
                     episode += 1
@@ -220,6 +220,8 @@ if __name__ == "__main__":
                 if step % STEPS_PER_INTERVAL == 0 and step > 0:
                     print('\nInterval', intr)
                     agent.save(intr)
+                    tf.summary.scalar('Interval score', np.mean(all_rewards), step)
+                    all_rewards = []
                     intr += 1
 
     except KeyboardInterrupt:

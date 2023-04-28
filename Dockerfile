@@ -5,11 +5,10 @@ WORKDIR /chizuru
 COPY . .
 
 RUN apt-get update \
-    && apt-get install -y software-properties-common \
     && add-apt-repository -y ppa:deadsnakes/ppa \
-    && apt-get update \
-    && apt-get install -y python3.7
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+    && apt-get update
+RUN apt-get install -y python3.7 python3.7-distutils
+RUN python3.7 -m pip install --upgrade pip
+RUN python3.7 -m pip install -r requirements.txt
 
 CMD ["python3.7", "chizuru.py"]
