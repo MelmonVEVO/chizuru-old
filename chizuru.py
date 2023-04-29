@@ -10,25 +10,33 @@
 #  ██╔══██╗██║   ██║██║   ██║██║   ██║██╔══╝
 #  ██║  ██║╚██████╔╝╚██████╔╝╚██████╔╝███████╗
 #  ╚═╝  ╚═╝ ╚═════╝  ╚═════╝  ╚═════╝ ╚══════╝
-#
-# Much of the code here is inspired by the work of https://github.com/sebtheiler/tutorials/blob/main/dqn/train_dqn.py,
-# especially the code for agent learning.
+
+# ******************************************************************************************************
+# The following code was adapted from:
+# Author: Sebastian Theiler
+# Accessed from: https://github.com/sebtheiler/tutorials/blob/main/dqn/train_dqn.py
+# Date of last retrieval: 26-04-2023
+# ******************************************************************************************************
 
 """This file contains everything needed to run the chizuru-rogue AI."""
 
 from rogue_gym.envs import RogueEnv
-from random import random, sample, randint
-from collections import deque
+from random import random, randint
 import tensorflow as tf
 import datetime
 import numpy as np
 import itertools
+import argparse
+import os
 
 # Constants
 STEPS_PER_INTERVAL = 10000
 CKPT_PATH = "training/czr-{interval:04d}-{label}.ckpt"
 LOG_DIR = "logs/czr" + datetime.datetime.now().strftime("%Y-%m-%d--%H:%M:%S")
 ACTIONS = ['h', 'j', 'k', 'l', 'u', 'n', 'b', 'y', 's', '.']  # Movement actions, search and wait.
+PARSER = argparse.ArgumentParser(description="Interval checkpoint to load from.")
+PARSER.add_argument('-i', '--interval', action="store")
+HISTORY_LEN = 4
 
 # Hyperparameters
 GAMMA = 0.99
@@ -43,6 +51,131 @@ EPSILON_DECAY = 150000
 LEARNING_RATE = 0.00001
 LEARNING_FREQUENCY = 75
 TARGET_UPDATE_FREQUENCY = 750
+PRIORITY_SCALE = 0.7
+
+
+class ReplayBuffer:
+    """ReplayBuffer for storing transitions.
+    This implementation was heavily inspired by Fabio M. Graetz's replay buffer
+    here: https://github.com/fg91/Deep-Q-Learning/blob/master/DQN.ipynb"""
+    def __init__(self, size=BUFFER_SIZE, input_shape=(21, 79), history_length=4):
+        """
+        Arguments:
+            size: Integer, Number of stored transitions
+            input_shape: Shape of the preprocessed frame
+            history_length: Integer, Number of frames stacked together to create a state for the agent
+        """
+        self.size = size
+        self.input_shape = input_shape
+        self.history_length = history_length
+        self.count = 0  # total index of memory written to, always less than self.size
+        self.current = 0  # index to write to
+
+        # Pre-allocate memory
+        self.actions = np.empty(self.size, dtype=np.int32)
+        self.rewards = np.empty(self.size, dtype=np.float32)
+        self.frames = np.empty((self.size, self.input_shape[0], self.input_shape[1]), dtype=np.uint8)
+        self.terminal_flags = np.empty(self.size, dtype=np.bool)
+        self.priorities = np.zeros(self.size, dtype=np.float32)
+
+    def add_experience(self, action, frame, reward, terminal):
+        """Saves a transition to the replay buffer
+        Arguments:
+            action: An integer between 0 and env.action_space.n - 1
+                determining the action the agent perfomed
+            frame: A (21, 74, 1) frame of the game in grayscale
+            reward: A float determining the reward the agend received for performing an action
+            terminal: A bool stating whether the episode terminated
+        """
+        if frame.shape != self.input_shape:
+            raise ValueError('Dimension of frame is wrong!')
+
+        # Write memory
+        self.actions[self.current] = action
+        self.frames[self.current, ...] = frame
+        self.rewards[self.current] = reward
+        self.terminal_flags[self.current] = terminal
+        self.priorities[self.current] = max(self.priorities.max(initial=0), 1)  # make the most recent experience important
+        self.count = max(self.count, self.current+1)
+        self.current = (self.current + 1) % self.size
+
+    def get_minibatch(self, batch_size=32, priority_scale=0.0):
+        """Returns a minibatch of self.batch_size = 32 transitions
+        Arguments:
+            batch_size: How many samples to return
+            priority_scale: How much to weight priorities. 0 = completely random, 1 = completely based on priority
+        Returns:
+            A tuple of states, actions, rewards, new_states, and terminals
+            If use_per is True:
+                An array describing the importance of transition. Used for scaling gradient steps.
+                An array of each index that was sampled
+        """
+
+        if self.count < self.history_length:
+            raise ValueError('Not enough memories to get a minibatch')
+
+        # Get sampling probabilities from priority list
+        scaled_priorities = self.priorities[self.history_length:self.count-1] ** priority_scale
+        sample_probabilities = scaled_priorities / sum(scaled_priorities)
+
+        # Get a list of valid indices
+        indices = []
+        for i in range(batch_size):
+            while True:
+                # Get a random number from history_length to maximum frame written with probabilities based on priority weights
+                index = np.random.choice(np.arange(self.history_length, self.count-1), p=sample_probabilities)
+
+
+                # We check that all frames are from same episode with the two following if statements.  If either are True, the index is invalid.
+                if index >= self.current >= index - self.history_length:
+                    continue
+                if self.terminal_flags[index - self.history_length:index].any():
+                    continue
+                break
+            indices.append(index)
+
+        # Retrieve states from memory
+        states = []
+        new_states = []
+        for idx in indices:
+            states.append(self.frames[idx-self.history_length:idx, ...])
+            new_states.append(self.frames[idx-self.history_length+1:idx+1, ...])
+
+        states = np.transpose(np.asarray(states), axes=(0, 2, 3, 1))
+        new_states = np.transpose(np.asarray(new_states), axes=(0, 2, 3, 1))
+
+        # Get importance weights from probabilities calculated earlier
+        importance = 1/self.count * 1/sample_probabilities[[index - self.history_length for index in indices]]
+        importance = importance / importance.max()
+
+        return (states, self.actions[indices], self.rewards[indices], new_states, self.terminal_flags[indices]), importance, indices
+
+    def set_priorities(self, indices, errors, offset=0.1):
+        """Update priorities for PER
+        Arguments:
+            indices: Indices to update
+            errors: For each index, the error between the target Q-vals and the predicted Q-vals
+        """
+        for i, e in zip(indices, errors):
+            self.priorities[i] = abs(e) + offset
+
+    def save(self, folder_name):
+        """Save the replay buffer to a folder"""
+
+        if not os.path.isdir(folder_name):
+            os.mkdir(folder_name)
+
+        np.save(folder_name + '/actions.npy', self.actions)
+        np.save(folder_name + '/frames.npy', self.frames)
+        np.save(folder_name + '/rewards.npy', self.rewards)
+        np.save(folder_name + '/terminal_flags.npy', self.terminal_flags)
+
+    def load(self, folder_name):
+        """Loads the replay buffer from a folder"""
+        self.actions = np.load(folder_name + '/actions.npy')
+        self.frames = np.load(folder_name + '/frames.npy')
+        self.rewards = np.load(folder_name + '/rewards.npy')
+        self.terminal_flags = np.load(folder_name + '/terminal_flags.npy')
 
 
 class Agent:
@@ -52,7 +185,7 @@ class Agent:
         self.w = w
         self.online_net = create_dueling_dqn(h, w)
         self.target_net = create_dueling_dqn(h, w)
-        self.replay_buffer = deque(maxlen=BUFFER_SIZE)
+        self.replay_buffer = ReplayBuffer()
 
     def get_action(self, s, e):
         """Agent chooses an action."""
@@ -60,40 +193,38 @@ class Agent:
 
         if rnd_sample <= e:
             return randint(0, len(ACTIONS)-1)
-        return self.online_net.predict(tf.reshape(tf.convert_to_tensor(s), (-1, 21, 79, 1)))[0].argmax()
+        return self.online_net.predict(s.reshape(-1, 21, 79, HISTORY_LEN))[0].argmax()
 
     def update_target_network(self):
         """Updates target network with the online network."""
         self.target_net.set_weights(self.online_net.get_weights())
 
-    def learn(self, batch_size, gamma):  # god, I'm so tired.
+    def learn(self, batch_size, gamma, e, priority_scale=1.0):  # god, I'm so tired.
         """Learns from replays."""
-        minibatch = sample(self.replay_buffer, BATCH_SIZE)
+        (states, actions, rewards, new_states, dones), importance, indices = self.replay_buffer.get_minibatch(batch_size=batch_size, priority_scale=priority_scale)
+        importance = importance ** (1-e)
 
-        states = tf.constant([r[0] for r in minibatch])
-        actions = tf.constant([r[1] for r in minibatch])
-        rewards = tf.constant([r[2] for r in minibatch])
-        dones = tf.constant([r[3] for r in minibatch])
-        new_states = tf.constant([r[4] for r in minibatch])
+        arg_q_max = self.online_net.predict(new_states).argmax(axis=1)
 
-        arg_q_max = self.online_net.predict(tf.reshape(new_states, (batch_size, 21, 79, 1))).argmax(axis=1)
-
-        future_q_vals = self.target_net.predict(tf.reshape(new_states, (batch_size, 21, 79, 1)))
+        future_q_vals = self.target_net.predict(new_states)
         double_q = future_q_vals[range(batch_size), arg_q_max]
 
         target_q = tf.cast(rewards, tf.float32) + (gamma * double_q * (1.0 - tf.cast(dones, tf.float32)))
 
         with tf.GradientTape() as tape:
-            q_values = self.online_net(tf.reshape(states, (batch_size, 21, 79, 1)))
+            q_values = self.online_net(states)
 
             one_hot_actions = tf.keras.utils.to_categorical(actions, len(ACTIONS), dtype=np.float32)
             q = tf.reduce_sum(tf.multiply(q_values, one_hot_actions), axis=1)
 
             error = q - target_q
             learn_loss = tf.keras.losses.MeanSquaredError()(target_q, q)
+            learn_loss = tf.reduce_mean(learn_loss * importance)
 
             model_gradients = tape.gradient(learn_loss, self.online_net.trainable_variables)
             self.online_net.optimizer.apply_gradients(zip(model_gradients, self.online_net.trainable_variables))
+
+            self.replay_buffer.set_priorities(indices, error)
 
         return float(learn_loss.numpy()), error
 
@@ -110,7 +241,7 @@ class Agent:
 
 def create_dueling_dqn(h, w) -> tf.keras.Model:
     """Creates a Dueling DQN."""
-    net_input = tf.keras.Input(shape=(h, w, 1))
+    net_input = tf.keras.Input(shape=(h, w, HISTORY_LEN))
     # net_input = tf.keras.layers.Lambda(lambda layer: layer / 255)(net_input)
 
     conv1 = tf.keras.layers.Conv2D(32, (3, 3), strides=2, activation="relu", use_bias=False,
@@ -143,11 +274,6 @@ def create_dueling_dqn(h, w) -> tf.keras.Model:
     return final_model
 
 
-def create_rainbow_dqn(_h, _w):
-    """Creates a Rainbow Deep Q-network."""
-    pass
-
-
 def save_checkpoint(model_sv: tf.keras.Model, interval, label) -> None:
     """Saves the model checkpoint with given interval."""
     model_sv.save_weights(CKPT_PATH.format(interval=interval, label=label))
@@ -164,6 +290,11 @@ def load_checkpoint(model_ld: tf.keras.Model, interval, label) -> tf.keras.Model
 if __name__ == "__main__":
     agent = Agent(21, 79)
 
+    arg = PARSER.parse_args()
+
+    if arg.interval:
+        agent.load(arg.interval)
+
     writer = tf.summary.create_file_writer(LOG_DIR)
 
     CONFIG = {
@@ -179,38 +310,40 @@ if __name__ == "__main__":
     intr = 0
     episode = 0
     all_rewards = []
-    state = env.reset()
-    new_state, reward, done, _ = env.step('.')
-    for _ in range(4):
-        agent.replay_buffer.append((state.gray_image(), 9, reward, done, new_state.gray_image()))
-    state = new_state
+    all_losses = []
+    env.reset()
+    new_state, rew, done, _ = env.step('.')
+    agent.replay_buffer.add_experience(9, new_state.gray_image()[0], rew, done)
+    current_game_state = np.repeat(new_state.gray_image().reshape(21, 79, 1), HISTORY_LEN, axis=2)  # with a history of 4
 
     # Main processing
     try:
         with writer.as_default():
             for step in itertools.count():
                 epsilon = np.interp(step, [0, EPSILON_DECAY], [EPSILON_START, EPSILON_END])
-                action = agent.get_action(state.gray_image(), epsilon)
-                new_state, reward, done, _ = env.step(ACTIONS[action])
-                episode_reward += reward
-                all_rewards.append(reward)
+                act = agent.get_action(current_game_state, epsilon)
+                new_state, rew, done, _ = env.step(ACTIONS[act])
+                episode_reward += rew
+                all_rewards.append(rew)
+                current_game_state = np.append(current_game_state[:, :, 1:], new_state.gray_image().reshape(21, 79, 1), axis=2)
 
-                transition = (state.gray_image(), action, reward, done, new_state.gray_image())
-                agent.replay_buffer.append(transition)
-                state = new_state
+                agent.replay_buffer.add_experience(act, new_state.gray_image()[0], rew, done)
 
                 # Learning step
-                if step % LEARNING_FREQUENCY == 0 and len(agent.replay_buffer) > MIN_REPLAY_SIZE:
-                    loss, _ = agent.learn(BATCH_SIZE, GAMMA)
+                if step % LEARNING_FREQUENCY == 0 and agent.replay_buffer.count > MIN_REPLAY_SIZE:
+                    loss, _ = agent.learn(BATCH_SIZE, GAMMA, epsilon, PRIORITY_SCALE)
+                    all_losses.append(loss)
                     tf.summary.scalar('Loss', loss, step)
 
                 if step % TARGET_UPDATE_FREQUENCY == 0 and step > MIN_REPLAY_SIZE:
                     agent.update_target_network()
 
-                tf.summary.scalar('Rewards per step', reward, step)
+                if step % 10 == 0:
+                    tf.summary.scalar('Reward', np.mean(all_rewards[-10:]), step)
+                    tf.summary.scalar('Losses', np.mean(all_losses[-100:]), step)
 
                 if done:
-                    dlvl = state.dungeon_level
+                    dlvl = new_state.dungeon_level
                     env.reset()
                     all_rewards.append(episode_reward)
                     tf.summary.scalar('Evaluation score', episode_reward, episode)

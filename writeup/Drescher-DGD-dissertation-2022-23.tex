@@ -202,6 +202,7 @@
     \subsection{Fundamentals of RL}\label{subsec:fundamentals}
     The fundamentals of reinforcement learning and many fundamental algorithms for solving sequential decision problems is explained in detail by~\citet{sutton18}.
     The core idea behind reinforcement learning algorithms is that an agent performs \emph{actions} on an \emph{environment} by deriving what it should do from its \emph{policy}, which is a mapping from states to actions.
+    This loop is visualised in Figure~\ref{fig:rlgraph}.
     Once the agent performs an action, it receives the new game state as well as a \emph{reward} signal, telling the agent how good its choice was.
 
     \begin{figure}[ht]
@@ -226,12 +227,15 @@
     This means the optimal value of taking action \(a\) in state \(s\) is the expected reward of taking the action and then following the policy from there.
 
     \subsection{Deep Learning}\label{subsec:deep-learning}
-    Deep learning is a method of artificial intelligence that involves the use of deep neural networks to process data in a way inspired by the human brain. % TODO improve introductory paragraph and make sure not plagiarising
-    
+    Deep learning is a method of artificial intelligence that involves the use of deep neural networks to process data in a way inspired by the human brain.
+    A deep learning method can be supervised or unsupervised. % TODO look into this further
+    Deep reinforcement learning is unsupervised, as the input data - the game state - is not labelled.
+    The agent must use the reward signal it gains in order to approximate an ideal policy.
+
     Representing Q-values containing every state-action pairing becomes infeasible in large state spaces such as video
     games, requiring ever expanding tables and computational space needed to store them.
     Deep Q-learning, a technique by OpenAI~\citep{mnih15}, remedies this by using a convolutional neural network to
-    approximate the optimal Q-function \(Q*(s, a)\) using a convolutional neural network instead of keeping track of
+    approximate the optimal Q-function \(Q^*(s, a)\) using a convolutional neural network instead of keeping track of
     a table.
 
     The Deep Q-network in their writing was shown to play several Atari games to a superhuman level, most notably Video Pinball and Boxing.
@@ -300,7 +304,7 @@
 
     \begin{itemize}
         \item Monsters are disabled, so that combat is not part of the problem.
-        \item The amount of actions available to the agent is reduced.
+        \item The amount of actions available to the agent is reduced to the movement actions, search and wait.
         \item Initially we disabled hunger, so that the agent only needs to focus on descending the dungeon.
     \end{itemize}
 
@@ -335,7 +339,9 @@
     \subsection{Agent Implementation}\label{subsec:implementation}
     The agent will be implemented in Python, which is one of the most popular languages used to model neural networks due to its many AI-related libraries that are available, including TensorFlow, which is what we use.
     TensorFlow provides tools for working with linear algebra and is widely used in machine learning.
-    We chose TensorFlow because it is popular, and it is bundled with Keras, a library that streamlines the creation and running of neural networks.
+    We chose TensorFlow over other alternatives such as PyTorch because it is one of the most popular frameworks for research,
+    and it is bundled with Keras, a library that streamlines the creation and running of neural networks by providing the programmer with
+    easy-to-use tools for defining, tuning and training neural network models.
 
     The agent will use Rogue-gym~\citep{kanagawa19} as an environment to interact with.
     Rogue-gym is a game that accurately replicates the gameplay of Rogue while also allowing customisation of the game.
@@ -356,8 +362,10 @@
     \end{itemize}
 
     \subsection{Dueling DQN}\label{subsec:dueling-dqn}
+    \subsubsection{First Run}
 
     \subsection{Rainbow DQN}\label{subsec:rainbow-dqn}
+    \subsubsection{Second Run}
 
     \subsection{Summary}\label{subsec:summary}
 
@@ -421,21 +429,39 @@
     \end{itemize}
 
     \subsection{Hyperparameters}\label{subsec:hyperparameters}
-    \begin{lstlisting}[label={lst:hyperparameters}]
-        GAMMA = 0.99
-        NUM_ITERATIONS = 20000
-        MAX_TURNS_IN_EPISODE = 1000
-        BATCH_SIZE = 64
-        BUFFER_SIZE = 200000
-        MIN_REPLAY_SIZE = 400
-        EPSILON_START = 1.0
-        EPSILON_END = 0.01
-        EPSILON_DECAY = 150000
-        LEARNING_RATE = 0.00001
-        UPDATE_FREQUENCY = 1000
+    \subsubsection{Dueling DQN - First Run}
+    \begin{lstlisting}[label={lst:ddqn1hyperparameters}]
+GAMMA = 0.99
+NUM_ITERATIONS = 20000
+MAX_TURNS_IN_EPISODE = 1000
+BATCH_SIZE = 32
+BUFFER_SIZE = 200000
+MIN_REPLAY_SIZE = 400
+EPSILON_START = 1.0
+EPSILON_END = 0.01
+EPSILON_DECAY = 150000
+LEARNING_RATE = 0.00001
+LEARNING_FREQUENCY = 1000
+TARGET_UPDATE_FREQUENCY = 1000
     \end{lstlisting}
 
-    \subsection{Network Architecture}
+    \subsubsection{Dueling DQN - Second Run}
+    \begin{lstlisting}[label={lst:ddqn2hyperparameters}]
+GAMMA = 0.99
+NUM_ITERATIONS = 20000
+MAX_TURNS_IN_EPISODE = 1250
+BATCH_SIZE = 32
+BUFFER_SIZE = 200000
+MIN_REPLAY_SIZE = 1500
+EPSILON_START = 1.0
+EPSILON_END = 0.01
+EPSILON_DECAY = 150000
+LEARNING_RATE = 0.00001
+LEARNING_FREQUENCY = 75
+TARGET_UPDATE_FREQUENCY = 750
+    \end{lstlisting}
+
+    \subsection{Network Architecture}\label{subsec:network-architecture}
     \subsubsection{Dueling DQN}
     \begin{lstlisting}[label={lst:dueling}]
     net_input = tf.keras.Input(shape=(h, w, 1))
