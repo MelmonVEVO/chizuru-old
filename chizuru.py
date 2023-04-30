@@ -41,7 +41,7 @@ HISTORY_LEN = 4
 # Hyperparameters
 GAMMA = 0.99
 NUM_ITERATIONS = 20000
-MAX_TURNS_IN_EPISODE = 1250
+MAX_TURNS_IN_EPISODE = 1500
 BATCH_SIZE = 32
 BUFFER_SIZE = 100000
 MIN_REPLAY_SIZE = 1500
@@ -267,8 +267,7 @@ def create_dueling_dqn(h, w) -> tf.keras.Model:
 
     final_model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE),
-        loss=tf.keras.losses.MeanSquaredError(),
-        metrics=[tf.keras.metrics.SparseCategoricalAccuracy()]
+        loss=tf.keras.losses.MeanSquaredError()
     )
 
     return final_model
@@ -298,18 +297,24 @@ if __name__ == "__main__":
     writer = tf.summary.create_file_writer(LOG_DIR)
 
     CONFIG = {
-        'width': 79, 'height': 21,
+        'width': 79,
+        'height': 21,
+        'hide_dungeon': True,
         'dungeon': {
             'style': 'rogue',
-            'room_num_x': 3, 'room_num_y': 2
+            'room_num_x': 3,
+            'room_num_y': 2,
         },
-        'enemies': []
+        'enemies': {
+            'enemies': []
+        }
     }
     env = RogueEnv(max_steps=MAX_TURNS_IN_EPISODE, stair_reward=100.0, config_dict=CONFIG)
     episode_reward = 0
     intr = 0
     episode = 0
     all_rewards = []
+    interval_rewards = []
     all_losses = []
     env.reset()
     new_state, rew, done, _ = env.step('.')
@@ -325,6 +330,8 @@ if __name__ == "__main__":
                 new_state, rew, done, _ = env.step(ACTIONS[act])
                 episode_reward += rew
                 all_rewards.append(rew)
+                interval_rewards.append(rew)
+                all_rewards = all_rewards[-10:]
                 current_game_state = np.append(current_game_state[:, :, 1:], new_state.gray_image().reshape(21, 79, 1), axis=2)
 
                 agent.replay_buffer.add_experience(act, new_state.gray_image()[0], rew, done)
@@ -333,14 +340,15 @@ if __name__ == "__main__":
                 if step % LEARNING_FREQUENCY == 0 and agent.replay_buffer.count > MIN_REPLAY_SIZE:
                     loss, _ = agent.learn(BATCH_SIZE, GAMMA, epsilon, PRIORITY_SCALE)
                     all_losses.append(loss)
+                    all_losses = all_losses[-100:]
                     tf.summary.scalar('Loss', loss, step)
 
                 if step % TARGET_UPDATE_FREQUENCY == 0 and step > MIN_REPLAY_SIZE:
                     agent.update_target_network()
 
                 if step % 10 == 0:
-                    tf.summary.scalar('Reward', np.mean(all_rewards[-10:]), step)
-                    tf.summary.scalar('Losses', np.mean(all_losses[-100:]), step)
+                    tf.summary.scalar('Reward', np.mean(all_rewards), step)
+                    tf.summary.scalar('Losses', np.mean(all_losses), step)
 
                 if done:
                     dlvl = new_state.dungeon_level
@@ -358,8 +366,8 @@ if __name__ == "__main__":
                 if step % STEPS_PER_INTERVAL == 0 and step > 0:
                     print('\nInterval', intr)
                     agent.save(intr)
-                    tf.summary.scalar('Interval score', np.mean(all_rewards), intr)
-                    all_rewards = []
+                    tf.summary.scalar('Interval score', np.mean(interval_rewards), intr)
+                    interval_rewards = []
                     intr += 1
 
     except KeyboardInterrupt:

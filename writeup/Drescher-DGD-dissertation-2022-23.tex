@@ -352,7 +352,7 @@
     \section{Agent Training and Results}\label{sec:agent-training-and-results}  % TODO things here after data collection
     The agent was trained and evaluated on multiple Nvidia GeForce RTX 2080 graphics cards using CUDA.
 
-    Much of our code was inspired by the work of~\citet{sebtheiler}.
+    Our training code was adapted from the work of~\citet{sebtheiler}.
 
     During our training of the agent, we measured the agent's performance with the following criteria after every run:
 
@@ -411,14 +411,9 @@
     \section{Methods}\label{sec:methods}
 
     \subsection{Neural Network}\label{subsec:neural-network2}
-%    \begin{lstlisting}[label={lst:thing}]
-%        if __name__ == "__main__":
-%            print("Hello, world!")
-%    \end{lstlisting}
-
     \subsection{State Representation}\label{subsec:state-representation}
-    The state of the game is represented as a 21x79 grid of ASCII characters as displayed to a human player, an example
-    of which is shown in Figure~\ref{fig:rogsc}.
+    The state of the game is converted from a 21x79 grid of ASCII characters as displayed to a human player to a 21x79 grid of
+    numbers each representing one character using rogue-gym's \texttt{state.gray\_image()} function.
 
     \subsection{Reward Representation}\label{subsec:reward-representation}
     The reward signals are as follows
@@ -459,6 +454,23 @@ EPSILON_DECAY = 150000
 LEARNING_RATE = 0.00001
 LEARNING_FREQUENCY = 75
 TARGET_UPDATE_FREQUENCY = 750
+    \end{lstlisting}
+
+    \subsubsection{Dueling DQN/Prioritised Experience Replay}
+    \begin{lstlisting}[label={lst:ddqnperhyperparameters}]
+GAMMA = 0.99
+NUM_ITERATIONS = 20000
+MAX_TURNS_IN_EPISODE = 1250
+BATCH_SIZE = 32
+BUFFER_SIZE = 100000
+MIN_REPLAY_SIZE = 1500
+EPSILON_START = 1.0
+EPSILON_END = 0.01
+EPSILON_DECAY = 150000
+LEARNING_RATE = 0.00001
+LEARNING_FREQUENCY = 75
+TARGET_UPDATE_FREQUENCY = 750
+PRIORITY_SCALE = 0.7
     \end{lstlisting}
 
     \subsection{Network Architecture}\label{subsec:network-architecture}
