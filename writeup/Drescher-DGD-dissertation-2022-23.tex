@@ -9,6 +9,7 @@
 \usepackage[nottoc,notlof,notlot]{tocbibind}
 \usepackage{amsfonts}
 \usepackage[skip=10pt]{parskip}
+\usepackage{float}
 
 \definecolor{keyword}{rgb}{0,0,0.5}
 \definecolor{number}{rgb}{0, 0, 1}
@@ -186,7 +187,7 @@
         We will investigate into improvements of the DQN algorithm and apply them to play Rogue.
         \item Experiment by using a Dueling DQN, then a Rainbow DQN, both improvements to the original DQN algorithm.
         We will conduct two experiments for this product - training the agent with a Dueling DQN and a Rainbow DQN.
-        We will display, analyse and compare the results of the two experiments.
+        We will analyse and compare the results of the two experiments.
     \end{itemize}
 
     \subsection{Summary}\label{subsec:summary1}
@@ -206,7 +207,7 @@
     Once the agent performs an action, it receives the new game state as well as a \emph{reward} signal, telling the agent how good its choice was.
 
     \begin{figure}[ht]
-        \caption[The reinforcement learning loop.]{The reinforcement learning loop. An agent is provided with a state, performs an action and is provided with a reward signal and the resulting state. Image credit~\citet{bhattrl}}
+        \caption[The reinforcement learning loop.]{The reinforcement learning loop. An agent is provided with a state, performs an action and is provided with a reward signal and the resulting state. Image credit: \citet{bhattrl}}
         \centering
         \includegraphics[scale=0.4]{rlgraph}
         \label{fig:rlgraph}
@@ -221,16 +222,14 @@
     In this algorithm, the agent keeps track of a table, mapping state-action pairs to its value.
     When the agent reaches a certain state, it consults its Q-table to determine the most valuable action to take.
 
-    The goal of Q-learning is to find the optimal Q-function, which is defined by the Bellman optimality equation:
-    \[Q^{*}(s, a) \quad = \quad \mathbb{E} [r + \gamma max_{a'} Q^{*}(s', a')]\]
+    The goal of Q-learning is to find the optimal Q-function, which is defined by the Bellman equation:
+    \[Q^{*}(s, a) = \mathbb{E} [r + \gamma max_{a'} Q^{*}(s', a')]\]
 
     This means the optimal value of taking action \(a\) in state \(s\) is the expected reward of taking the action and then following the policy from there.
 
     \subsection{Deep Learning}\label{subsec:deep-learning}
     Deep learning is a method of artificial intelligence that involves the use of deep neural networks to process data in a way inspired by the human brain.
-    A deep learning method can be supervised or unsupervised. % TODO look into this further
-    Deep reinforcement learning is unsupervised, as the input data - the game state - is not labelled.
-    The agent must use the reward signal it gains in order to approximate an ideal policy.
+    This method can also be used in the field of reinforcement learning in order to approximate existing reinforcement learning methods.
 
     Representing Q-values containing every state-action pairing becomes infeasible in large state spaces such as video
     games, requiring ever expanding tables and computational space needed to store them.
@@ -257,12 +256,38 @@
     This saves on computation time due to the intuition that it is not necessary to estimate action-values for each action.
 
     And finally, Rainbow DQN~\citep{hessel17}, which combines six different techniques to improve upon the Deep Q-network algorithm.
-    These techniques are Double DQN~\citep{hasselt15}, Dueling DQN~\citep{wang16}, Prioritised Experience Replay~\citep{schaul16},
-    Multi-step Learning~\citep[chap.~7.1]{sutton18}, Distributional RL~\citep{bellemare17} and Noisy Networks~\citep{fortunato19}.
+    These techniques are Double DQN, Dueling DQN, Prioritised Experience Replay,
+    Multi-step Learning, Distributional RL and Noisy Networks.
+
+    Prioritised Experience Replay~\citep{schaul16} is a technique where experiences in the replay buffer are prioritised in terms of importance and how valuable experiences are to training.
+    This way, experiences with higher priority are sampled more often when training happens, allowing for the agent to learn more efficiently.
+    Priorities of experiences are adjusted over time so that the agent does not overfit with certain experiences.
+
+    Multistep Learning~\citep[chap.~7.1]{sutton18} is a technique in reinforcement learning that uses sequences of actions and rewards rather than just an individual transition for learning.
+    This is in contrast to traditional Q-learning which only takes into account an individual transition for training and calculating action values (a Markov Decision Process framework).
+    In multistep learning
+
+    Distributional reinforcement learning~\citep{bellemare17} differs from traditional RL by evaluating a distribution of a random return, rather than a single value for expected returns.
+    The goal is to estimate the probability distribution of an expected reward.
+
+    In standard neural networks, weights are deterministic, which means that a certain input will produce only one output.
+    Noisy Networks~\citep{fortunato19} introduces a small amount of Gaussian noise within the weights.
+    This is because deterministic networks can make the agent get stuck in a suboptimal policy.
+    Adding noise to a network can encourage the agent to explore in an efficient manner.
+    According to the paper, the key insight is `a single change to the weight vector can induce a consistent and potentially very complex, state dependent change in policy over multiple time steps'.
+
+    DeepMind found that, by combining six different improvements to the DQN algorithm into one, the algorithm vastly outperforms individual improvements to the DQN algorithm as shown in Figure~\ref{fig:neuralnetperformance}.
+
+    \begin{figure}[ht]
+        \caption[Comparison of different neural network performance.]{Comparison of performance averaged over 57 Atari games for different neural networks. Image credit: \citet{hessel17}}
+        \centering
+        \includegraphics[scale=0.4]{neuralnetperformance}
+        \label{fig:neuralnetperformance}
+    \end{figure}
 
     When trying to create an agent that plays the online game Dota 2, \citet{berner19} used a Long Short-term Memory network.
 
-    LSTMs\footnote{Long short-term memory network, type of "recurrent neural network" used in the field of deep learning capable of holding long-term dependencies.} were first defined by~\citet{hochreiter97} and improved upon in later works.
+    LSTMs\footnote{Long short-term memory network, type of ``recurrent neural network'' used in the field of deep learning capable of holding long-term dependencies.} were first defined by~\citet{hochreiter97} and improved upon in later works.
     An LSTM is an extension of the ``recurrent'' neural network, where nodes use feedback connections to allow the network to ``remember'' information in the long term.
     This solves the problem that traditional neural networks have, where they can't store information that can be useful to them in the long term.
 
@@ -284,7 +309,10 @@
     This allows the different agents that run simultaneously to learn from different situations to build a common cumulative reward.
     It also involves the work by~\citet{jaderberg16}.
 
-    % TODO talk about rogue-gym here
+    Another interface that has been created is Rogue-gym~\citep{kanagawa19}.
+    Rogue-gym is a game that accurately replicates the gameplay of Rogue while also allowing customisation of the game.
+    It also comes with a customised OpenAI Gym environment which allows AI agents written in Python to interact with the game.
+    The paper also shows an agent that was trained on a Proximal policy optimisation algorithm~\citep{schulman17}.
 
     \subsection{Exploring Other Roguelikes}\label{subsec:exploring-other-roguelikes}
     Rogue is not the only roguelike that has been explored with machine learning.
@@ -293,7 +321,6 @@
     The paper introduces a baseline model that they trained on the environment.
     The map and player status are processed separately, concatenated, and run through an LSTM and a regular layer to produce the policy.
 
-    % SkillHack~\citep{matthews22}.
     An article by~\citet{izumiya21} explores how to involve the item inventory in the neural network system of a deep reinforcement learning agent with an attention-based approach.
     It is attention based as the system calculates a score for each item in an inventory using an ``attention function''.
 
@@ -320,20 +347,9 @@
 
     \subsection{Neural Network}\label{subsec:neural-network}
     % TODO How are you going to compare Dueling DQN and Rainbow DQN? Is there a metric or multiple metrics? The tradeoff between metrics? Are they standard or ad hoc?
-    The agent in our experiments will first utilise a Dueling DQN, then utilise a Rainbow DQN as described in the report by~\citet{hessel17}.
-    The following techniques make up the Rainbow DQN:
-    \begin{itemize}
-        \item \textbf{Double Q-learning}: a technique applied to Deep Q-learning where double estimation is used
-        with the goal to remedy a problem that the original DQN had where it would be biased to overestimate Q-values.
-        \item \textbf{Prioritised Experience Replay}: a technique where experiences in the replay buffer are
-        prioritised based on their expected learning progress.
-        \item \textbf{Dueling networks}~\citep{schaul16}: an extension of Deep Q-learning that utilises the concept of Advantage.
-        Dueling DQN splits the network into two streams - one to approximate state-value and one to approximate advantage.
-        These streams are then aggregated to calculate the Q-values.
-        \item \textbf{Multi-step learning}~\citep[chap.~7.1]{sutton18}: a technique where the agent learns from the cumulative reward over several steps as individual actions may not provide an immediate reward.
-        \item \textbf{Distributional RL}: approximating distributions of returns rather than expected returns.
-        \item \textbf{Noisy Networks}: applying random noise to the neural network's parameters in order to avoid overfitting.
-    \end{itemize}
+    The agent in our experiments will first utilise a base Dueling DQN, which will then be extended with Prioritised Experience Replay and finally extended with Noisy Networks and Multi-step Learning.
+    Should time allow we will also introduce Distributional RL in order to create a full Rainbow DQN algorithm.
+
     % TODO write about the benefits and drawbacks of both dueling and rainbow
 
     \subsection{Agent Implementation}\label{subsec:implementation}
@@ -344,13 +360,19 @@
     easy-to-use tools for defining, tuning and training neural network models.
 
     The agent will use Rogue-gym~\citep{kanagawa19} as an environment to interact with.
-    Rogue-gym is a game that accurately replicates the gameplay of Rogue while also allowing customisation of the game.
-    It also comes with a customised OpenAI Gym environment which allows AI agents written in Python to interact with the game.
+    
+    \subsection{Experiments}\label{subsec:experiments} % TODO experiment discussion
 
-    \subsection{Summary}\label{subsec:summary2} % TODO add
 
-    \section{Agent Training and Results}\label{sec:agent-training-and-results}  % TODO things here after data collection
-    The agent was trained and evaluated on multiple Nvidia GeForce RTX 2080 graphics cards using CUDA.
+    \subsection{Summary}\label{subsec:summary2}
+    In this section we have outlined the algorithms and techniques we will use to create our agent, what we will use to implement them and how we will conduct our experiments.
+    We have outlined our reasoning as to why we will use a Deep Q-network, mainly because it is a well-known algorithm that is proven to work well on a variety of game environments.
+    The algorithms we will use are improvements to the base Deep Q-network algorithm: Dueling DQN, DDQN with Prioritised Experience Replay and DDQN with PER and Noisy Networks.
+    If time allows, we will implement Distributional RL to introduce a full Rainbow DQN to the environment.
+    We will compare these algorithms to see how they do when learning Rogue.
+
+    \section{Agent Training and Results}\label{sec:agent-training-and-results}
+    The agent was trained and evaluated on an Nvidia GeForce RTX 2080 graphics card using CUDA.
 
     Our training code was adapted from the work of~\citet{sebtheiler}.
 
@@ -362,39 +384,96 @@
     \end{itemize}
 
     \subsection{Dueling DQN}\label{subsec:dueling-dqn}
-    \subsubsection{First Run}
+    In our first experiment, we ran our Dueling DQN for 13000 steps.
+    From the results that can be seen in Figure~\ref{fig:ddqn_interval_score}, we were unable to extract a satisfactory result.
+    Our model's average reward per interval\footnote{One interval is 10000 steps.} stagnated around 0.02, without increasing except one outlier of Interval 3, with an average reward of 0.049.
+    Since the model could not increase its average reward, we set out to improve our model by configuring our hyperparameters and integrating Prioritised Experience Replay~\citet{schaul16} into our Dueling DQN for our second experiment.
+    \begin{figure}[h]
+        \caption[DDQN: Average reward per interval.]{Average reward per interval. One interval is 10000 steps.}
+        \centering
+        \includegraphics[scale=0.5]{interval_score_ddqn}
+        \label{fig:ddqn_interval_score}
+    \end{figure}
 
-    \subsection{Rainbow DQN}\label{subsec:rainbow-dqn}
-    \subsubsection{Second Run}
+    \subsection{Dueling DQN with Prioritised Experience Replay}\label{subsec:dueling-dqn-with-prioritised-experience-replay}
+    In our second experiment, we integrated Prioritised Experience Replay, another improvement to the DQN algorithm.
+    As shown in Figure~\ref{fig:ddqn_per_interval_score}, we were also unable to extract a satisfactory result, with the average reward per interval stagnating over the entire training period.
 
-    \subsection{Summary}\label{subsec:summary}
+    \begin{figure}[h]
+        \caption[DDQN with PER: Average reward per interval.]{Average reward per interval. One interval is 10000 steps.}
+        \centering
+        \includegraphics[scale=0.5]{interval_score_ddqn_per}
+        \label{fig:ddqn_per_interval_score}
+    \end{figure}
+
+
+
+    \subsection{Dueling DQN with Prioritised Experience Replay, Noisy Networks and Multi-step Learning}\label{subsec:dueling-dqn-with-prioritised-experience-replay-and-noisy-networks}
+    \textbf{Need to be added.}
 
     \section{Conclusion}\label{sec:conclusion}
-    In this paper we have set out to improve upon to~\citet{asperti18}`s tests by utilising a Rainbow
-    DQN to perform dungeon crawling in Rogue's randomly generated dungeons, while also using a Dueling DQN in order to
-    provide a perspective on the performance on the Rainbow DQN.
+    In this paper we have set out to improve upon to~\citet{asperti18} and ~\citet{kanagawa19}`s tests by utilising extensions to the DQN algorithm
+    to perform dungeon crawling in Rogue's randomly generated dungeons, testing a combination of multiple improvements in order to
+    provide a perspective on the performance.
+
+    We have achieved the following in this article:
+    \begin{itemize}
+        \item Implementation of a Dueling DQN as well as two different improvements for learning the game Rogue
+        \item Deployment of our neural network to run experiments
+    \end{itemize}
+
+    % TODO go into detail about the actual achievements
+
+    However, our goal was to achieve a successful improvement upon previous literature, but our models did not achieve satisfactory results.
+    The average reward per interval that our models attained did not increase as the model learnt.
+    This could be due to either more training being required, or our model needing improvement, as we describe in depth in Section~\ref{subsec:future-work}.
+
+    Our main challenge was creation of the neural network.
+
+
+    Another challenge we faced was tuning of hyperparameters.
+    We experimented with several configurations of hyperparameters, and the hyperparameters we used for our tests are noted in Section~\ref{subsec:hyperparameters}.
+    Since we were unsuccessful in obtaining satisfactory results, we must improve upon how we tune our hyperparameters as described in Section~\ref{subsec:future-work}.
+
+    Our work provides a framework to...
+
+    This project was good to develop...
 
     % Explain where chizuru performed well, where it screwed up, and the most important aspect about it
 
     % Talk about the neural network here
     
     \subsection{Future work}\label{subsec:future-work}
-    While
+    As we were unsuccessful in achieving a satisfactory result, the future work for this project aims to rectify this.
+    Looking at what we have accomplished and read, we have identified four main areas of improvement for future work.
 
-    % Talk about using a customised neural network to run on Nethack or Angband
-%    \begin{figure}[ht]
-%        \caption{The structure of the Chizuru neural network *OUTDATED.} % TODO outdated
-%        \centering
-%        \includegraphics[scale=0.5]{network_structure}
-%        \label{fig:netwk}
-%    \end{figure}
+    The first is memory management of our program.
+    During training of our agent, we ran into an issue where our program was gradually using up more and more memory on the system.
+    This means that training of our agent would have to be interrupted periodically so that it would not impact other processes on the system, decreasing the efficiency of training.
+    We ran the Fil memory profiler\footnote{\url{https://pythonspeed.com/fil/}} on our program and discovered that predicting an action to take for our agent was taking up the bulk of memory as can be seen in Figure~\ref{fig:fil}.
+    In future work investigation into why these memory issues occur should be performed and how to mitigate them.
 
-    \subsection{Summary}\label{subsec:summary4}
-    In summary, this project was able to
-    
+    \begin{figure}[h]
+        \caption[Fil Profiler result for DDQN with PER.]{Fil memory profiler result for our DDQN with PER. Larger bars with a deeper shade of red means the line took up more memory.}
+        \centering
+        \includegraphics[scale=0.3]{fil}
+        \label{fig:fil}
+    \end{figure}
+
+    Secondly is the reward function.
+    The reward function currently provides a reward of 0 for moving in the map without collecting gold or descending stairs.
+    In
+
+    Network architecture
+
+    The fourth is hyperparameter tweaking.
+    As we did not obtain satisfactory results for our neural network, in future work more research on what hyperparameters
+    are used in what configuration of neural networks and environments are used should be conducted.
+    In addition, more experiments on how different configurations of hyperparameters should also be performed.
+
     \subsection{Reflection}\label{subsec:reflection}
 
-    % Write some bollocks on how RL works well on video games and how this can lead to real-world developments with this technology.
+    % Write some bollocks on how RL works well on video games and how this can lead to real-world developments with this technology. End off on a positive note!
 
 
     %%%%% Everything after here is not counted in the word count. %%%%%
@@ -410,7 +489,6 @@
     \addcontentsline{toc}{section}{Appendices}
     \section{Methods}\label{sec:methods}
 
-    \subsection{Neural Network}\label{subsec:neural-network2}
     \subsection{State Representation}\label{subsec:state-representation}
     The state of the game is converted from a 21x79 grid of ASCII characters as displayed to a human player to a 21x79 grid of
     numbers each representing one character using rogue-gym's \texttt{state.gray\_image()} function.
@@ -420,7 +498,7 @@
     \begin{itemize}
         \item Reward per movement: 0
         \item Reward for collecting gold: based on gold collected
-        \item Reward for descending stairs: 50
+        \item Reward for descending stairs: 100
     \end{itemize}
 
     \subsection{Hyperparameters}\label{subsec:hyperparameters}
@@ -473,10 +551,12 @@ TARGET_UPDATE_FREQUENCY = 750
 PRIORITY_SCALE = 0.7
     \end{lstlisting}
 
+    \subsubsection{Dueling DQN/Noisy Networks}
+
     \subsection{Network Architecture}\label{subsec:network-architecture}
     \subsubsection{Dueling DQN}
     \begin{lstlisting}[label={lst:dueling}]
-    net_input = tf.keras.Input(shape=(h, w, 1))
+    net_input = tf.keras.Input(shape=(h, w, 4))
     net_input = tf.keras.layers.Lambda(lambda layer: layer / 255)(net_input)
 
     conv1 = tf.keras.layers.Conv2D(32, (3, 3), strides=2, activation="relu")(net_input)
@@ -504,14 +584,9 @@ PRIORITY_SCALE = 0.7
     )
 
     return final_model
-    \end{lstlisting} % XXX do i need to cite this?
+    \end{lstlisting}
 
+    \subsubsection{Dueling DQN/Noisy Networks}
 
-    \subsubsection{Rainbow DQN}
-
-    \section{Results}\label{sec:results}
-    \subsection{Dueling DQN}\label{subsec:dueling-dqn2}
-
-    \subsection{Rainbow DQN}\label{subsec:rainbow-dqn2}
 
 \end{document}
