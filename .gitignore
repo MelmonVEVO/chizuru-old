@@ -538,7 +538,9 @@ logs/
 logs_dueling/
 logs_dueling_per/
 logs_rainbow/
+logs_noisy/
 training_dueling/
 training_rainbow/
+training_noisy/
 code-submission/
 fil-result/

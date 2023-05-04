@@ -260,12 +260,11 @@
     Multi-step Learning, Distributional RL and Noisy Networks.
 
     Prioritised Experience Replay~\citep{schaul16} is a technique where experiences in the replay buffer are prioritised in terms of importance and how valuable experiences are to training.
-    This way, experiences with higher priority are sampled more often when training happens, allowing for the agent to learn more efficiently.
+    This way, experiences with higher learning opportunity are sampled more often when training happens, allowing for the agent to learn more efficiently.
     Priorities of experiences are adjusted over time so that the agent does not overfit with certain experiences.
 
     Multistep Learning~\citep[chap.~7.1]{sutton18} is a technique in reinforcement learning that uses sequences of actions and rewards rather than just an individual transition for learning.
     This is in contrast to traditional Q-learning which only takes into account an individual transition for training and calculating action values (a Markov Decision Process framework).
-    In multistep learning
 
     Distributional reinforcement learning~\citep{bellemare17} differs from traditional RL by evaluating a distribution of a random return, rather than a single value for expected returns.
     The goal is to estimate the probability distribution of an expected reward.
@@ -337,18 +336,11 @@
 
     The objective of the neural network for chizuru-rogue is to take in the observed dungeon state as inputs and return an action that will maximise the expected reward as output as if it were maximising an action-value function.
 
-    \subsection{Player Action}\label{subsec:action}
-    Every action in Rogue is available to the player from the start of the game.
-
-    When the player uses an action that utilises an item, the game will await the player to input a key.
-    Every item in the player's inventory maps to one key on the keyboard.
-    The player may input \texttt{*} to see what legal items they may choose and their corresponding key.
-    Additionally, the player may see what the item-key mapping is by viewing their inventory with the \texttt{i} key at any time.
-
     \subsection{Neural Network}\label{subsec:neural-network}
     % TODO How are you going to compare Dueling DQN and Rainbow DQN? Is there a metric or multiple metrics? The tradeoff between metrics? Are they standard or ad hoc?
-    The agent in our experiments will first utilise a base Dueling DQN, which will then be extended with Prioritised Experience Replay and finally extended with Noisy Networks and Multi-step Learning.
-    Should time allow we will also introduce Distributional RL in order to create a full Rainbow DQN algorithm.
+    We aim to evaluate the performance of our agent by implementing and analysing the base Dueling DQN algorithm and two improvements, each applied in turn.
+    We will first implement a base Dueling DQN, then we will extend the algorithm with Prioritised Experience Replay and finally extend with Noisy Networks.
+    Should time allow we will also introduce Distributional RL and Multi-step Learning in order to create a full Rainbow DQN algorithm.
 
     % TODO write about the benefits and drawbacks of both dueling and rainbow
 
@@ -360,6 +352,9 @@
     easy-to-use tools for defining, tuning and training neural network models.
 
     The agent will use Rogue-gym~\citep{kanagawa19} as an environment to interact with.
+    This is because it provides us with a OpenAI Gym environment for Rogue.
+    An OpenAI Gym environment is an environment that is wrapped with OpenAI Gym, providing tools for AI agents to interact with an environment.
+    We chose to use an existing environment over creating a new one as it would streamline development of our program, allowing us more time to focus on the AI.
     
     \subsection{Experiments}\label{subsec:experiments} % TODO experiment discussion
 
@@ -388,7 +383,7 @@
     From the results that can be seen in Figure~\ref{fig:ddqn_interval_score}, we were unable to extract a satisfactory result.
     Our model's average reward per interval\footnote{One interval is 10000 steps.} stagnated around 0.02, without increasing except one outlier of Interval 3, with an average reward of 0.049.
     Since the model could not increase its average reward, we set out to improve our model by configuring our hyperparameters and integrating Prioritised Experience Replay~\citet{schaul16} into our Dueling DQN for our second experiment.
-    \begin{figure}[h]
+    \begin{figure}[H]
         \caption[DDQN: Average reward per interval.]{Average reward per interval. One interval is 10000 steps.}
         \centering
         \includegraphics[scale=0.5]{interval_score_ddqn}
@@ -399,8 +394,8 @@
     In our second experiment, we integrated Prioritised Experience Replay, another improvement to the DQN algorithm.
     As shown in Figure~\ref{fig:ddqn_per_interval_score}, we were also unable to extract a satisfactory result, with the average reward per interval stagnating over the entire training period.
 
-    \begin{figure}[h]
-        \caption[DDQN with PER: Average reward per interval.]{Average reward per interval. One interval is 10000 steps.}
+    \begin{figure}[H]
+        \caption[DDQN/PER: Average reward per interval.]{Average reward per interval. One interval is 10000 steps.}
         \centering
         \includegraphics[scale=0.5]{interval_score_ddqn_per}
         \label{fig:ddqn_per_interval_score}
@@ -408,8 +403,15 @@
 
 
 
-    \subsection{Dueling DQN with Prioritised Experience Replay, Noisy Networks and Multi-step Learning}\label{subsec:dueling-dqn-with-prioritised-experience-replay-and-noisy-networks}
-    \textbf{Need to be added.}
+    \subsection{Dueling DQN with Prioritised Experience Replay and Noisy Networks}\label{subsec:dueling-dqn-with-prioritised-experience-replay-and-noisy-networks} % TODO
+    In our third experiment we integrated Noisy Networks to our network architecture.
+    We did this by utilising the Keras layer \texttt{GaussianNoise()} to add a small amount of Gaussian Noise after our convolutional layers as can be seen in Appendix~\ref{lst:ddqnnoisy}.
+    \begin{figure}[H]
+        \caption[DDQN/PER/NN: Average reward per interval.]{Average reward per interval. One interval is 10000 steps.}
+        \centering
+        \includegraphics[scale=0.5]{interval_score_ddqn_noisy}
+        \label{fig:ddqn_noisy_interval_score}
+    \end{figure}
 
     \section{Conclusion}\label{sec:conclusion}
     In this paper we have set out to improve upon to~\citet{asperti18} and ~\citet{kanagawa19}`s tests by utilising extensions to the DQN algorithm
@@ -454,7 +456,7 @@
     In future work investigation into why these memory issues occur should be performed and how to mitigate them.
 
     \begin{figure}[h]
-        \caption[Fil Profiler result for DDQN with PER.]{Fil memory profiler result for our DDQN with PER. Larger bars with a deeper shade of red means the line took up more memory.}
+        \caption[Fil Profiler result for DDQN with PER.]{Fil memory profiler result for our DDQN with PER. Larger bars with a deeper shade of red means the code line took up more memory.}
         \centering
         \includegraphics[scale=0.3]{fil}
         \label{fig:fil}
@@ -477,6 +479,8 @@
 
 
     %%%%% Everything after here is not counted in the word count. %%%%%
+
+    \textbf{Total word count: xxx}
     \medskip
 
     \bibliographystyle{agsm}
@@ -503,23 +507,7 @@
 
     \subsection{Hyperparameters}\label{subsec:hyperparameters}
     \subsubsection{Dueling DQN - First Run}
-    \begin{lstlisting}[label={lst:ddqn1hyperparameters}]
-GAMMA = 0.99
-NUM_ITERATIONS = 20000
-MAX_TURNS_IN_EPISODE = 1000
-BATCH_SIZE = 32
-BUFFER_SIZE = 200000
-MIN_REPLAY_SIZE = 400
-EPSILON_START = 1.0
-EPSILON_END = 0.01
-EPSILON_DECAY = 150000
-LEARNING_RATE = 0.00001
-LEARNING_FREQUENCY = 1000
-TARGET_UPDATE_FREQUENCY = 1000
-    \end{lstlisting}
-
-    \subsubsection{Dueling DQN - Second Run}
-    \begin{lstlisting}[label={lst:ddqn2hyperparameters}]
+    \begin{lstlisting}[label={lst:ddqnhyperparameters}]
 GAMMA = 0.99
 NUM_ITERATIONS = 20000
 MAX_TURNS_IN_EPISODE = 1250
@@ -556,37 +544,68 @@ PRIORITY_SCALE = 0.7
     \subsection{Network Architecture}\label{subsec:network-architecture}
     \subsubsection{Dueling DQN}
     \begin{lstlisting}[label={lst:dueling}]
-    net_input = tf.keras.Input(shape=(h, w, 4))
-    net_input = tf.keras.layers.Lambda(lambda layer: layer / 255)(net_input)
+net_input = tf.keras.Input(shape=(h, w, 4))
 
-    conv1 = tf.keras.layers.Conv2D(32, (3, 3), strides=2, activation="relu")(net_input)
-    conv2 = tf.keras.layers.Conv2D(64, (3, 3), strides=1, activation="relu")(conv1)
-    conv3 = tf.keras.layers.Conv2D(64, (3, 3), strides=1, activation="relu")(conv2)
+conv1 = tf.keras.layers.Conv2D(32, (3, 3), strides=2, activation="relu")(net_input)
+conv2 = tf.keras.layers.Conv2D(64, (3, 3), strides=1, activation="relu")(conv1)
+conv3 = tf.keras.layers.Conv2D(64, (3, 3), strides=1, activation="relu")(conv2)
 
-    val, adv = tf.keras.layers.Lambda(lambda ww: tf.split(ww, 2, 3))(conv3)
+val, adv = tf.keras.layers.Lambda(lambda ww: tf.split(ww, 2, 3))(conv3)
 
-    val = tf.keras.layers.Flatten()(val)
-    val = tf.keras.layers.Dense(1)(val)
+val = tf.keras.layers.Flatten()(val)
+val = tf.keras.layers.Dense(1)(val)
 
-    adv = tf.keras.layers.Flatten()(adv)
-    adv = tf.keras.layers.Dense(len(ACTIONS))(adv)
+adv = tf.keras.layers.Flatten()(adv)
+adv = tf.keras.layers.Dense(len(ACTIONS))(adv)
 
-    reduced = tf.keras.layers.Lambda(lambda ww: tf.reduce_mean(ww, axis=1, keepdims=True))
+reduced = tf.keras.layers.Lambda(lambda ww: tf.reduce_mean(ww, axis=1, keepdims=True))
 
-    output = tf.keras.layers.Add()([val, tf.keras.layers.Subtract()([adv, reduced(adv)])])
+output = tf.keras.layers.Add()([val, tf.keras.layers.Subtract()([adv, reduced(adv)])])
 
-    final_model = tf.keras.Model(net_input, output)
+final_model = tf.keras.Model(net_input, output)
 
-    final_model.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE),
-        loss=tf.keras.losses.MeanSquaredError(),
-        metrics=[tf.keras.metrics.SparseCategoricalAccuracy()]
-    )
+final_model.compile(
+    optimizer=tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE),
+    loss=tf.keras.losses.MeanSquaredError(),
+    metrics=[tf.keras.metrics.SparseCategoricalAccuracy()]
+)
 
-    return final_model
+return final_model
     \end{lstlisting}
 
     \subsubsection{Dueling DQN/Noisy Networks}
+    \begin{lstlisting}[label={lst:ddqnnoisy}]
+net_input = tf.keras.Input(shape=(h, w, HISTORY_LEN))
+
+conv1 = tf.keras.layers.Conv2D(32, (3, 3), strides=2, activation="relu", use_bias=False,
+                               kernel_initializer=tf.keras.initializers.VarianceScaling(scale=2.))(net_input)
+conv2 = tf.keras.layers.Conv2D(64, (3, 3), strides=1, activation="relu", use_bias=False,
+                               kernel_initializer=tf.keras.initializers.VarianceScaling(scale=2.))(conv1)
+conv3 = tf.keras.layers.Conv2D(64, (3, 3), strides=1, activation="relu", use_bias=False,
+                               kernel_initializer=tf.keras.initializers.VarianceScaling(scale=2.))(conv2)
+noise = tf.keras.layers.GaussianNoise(0.1)(conv3)
+
+val, adv = tf.keras.layers.Lambda(lambda ww: tf.split(ww, 2, 3))(noise)
+
+val = tf.keras.layers.Flatten()(val)
+val = tf.keras.layers.Dense(1, kernel_initializer=tf.keras.initializers.VarianceScaling(scale=2.))(val)
+
+adv = tf.keras.layers.Flatten()(adv)
+adv = tf.keras.layers.Dense(len(ACTIONS), kernel_initializer=tf.keras.initializers.VarianceScaling(scale=2.))(adv)
+
+reduced = tf.keras.layers.Lambda(lambda ww: tf.reduce_mean(ww, axis=1, keepdims=True))
+
+output = tf.keras.layers.Add()([val, tf.keras.layers.Subtract()([adv, reduced(adv)])])
+
+final_model = tf.keras.Model(net_input, output)
+
+final_model.compile(
+    optimizer=tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE),
+    loss=tf.keras.losses.MeanSquaredError()
+)
+
+return final_model
+    \end{lstlisting}
 
 
 \end{document}
