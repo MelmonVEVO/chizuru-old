@@ -171,30 +171,29 @@
     If the player's HP falls to 0, the player dies and the game ends.
 
     Unlike many other role-playing games of the time, Rogue uses character permanent death as a mechanic, providing the player with
-    the unique challenge of surviving till the end, as the player could not load a previous save if they are defeated.
+    the unique challenge of surviving till the end, as the player can not load a previous save if they are defeated.
     Therefore, the player has to think through their future moves much more rigorously;
     the player's decisions have much more weight to them as a wrong move could mean game over.
-    \emph{Michael Toy}, Rogue's co-creator, touched on the topic of permanent death in Roguelike Celebration 2016~\citep{gamasutra16} by saying `We were trying to make it more immersive by making things matter \ldots'.
+    \emph{Michael Toy}, Rogue's co-creator, emphasised on the topic of permanent death in Roguelike Celebration 2016~\citep{gamasutra16} by saying `We were trying to make it more immersive by making things matter \ldots'.
 
     \subsection{Project Objectives}\label{subsec:objectives}
     The primary objectives of this project are as follows:
     \begin{itemize}
         \item Create a program that uses artificial intelligence to play Rogue.
-        This will involve designing, developing and deploying the program to a GPU cloud for training an agent.
+        This involves designing, developing and deploying the program to a GPU cloud for training an agent.
         \item Improve upon existing work for playing Rogue.
         As we will explain in Section~\ref{subsec:exploring-rogue}, existing literature has only applied the standard
-        DQN\footnote{Deep Q-network: using neural networks to approximate Q-learning.} to Rogue.
+        DQN\footnote{Deep Q-network: using neural networks to approximate Q-learning. See Section~\ref{subsec:deep-learning}.} to Rogue.
         We will investigate into improvements of the DQN algorithm and apply them to play Rogue.
-        \item Experiment by using a Dueling DQN, then a Rainbow DQN, both improvements to the original DQN algorithm.
-        We will conduct two experiments for this product - training the agent with a Dueling DQN and a Rainbow DQN.
-        We will analyse and compare the results of the two experiments.
+        \item Experiment by using a Dueling DQN, then integrating several improvements to the original DQN algorithm.
+        We will conduct, analyse and compare the results of three experiments for this product.
     \end{itemize}
 
     \subsection{Summary}\label{subsec:summary1}
-    In this section we have introduced our problem domain Rogue, a dungeon crawling game that we will make our program explore.
-    Beyond this section, Section~\ref{sec:literature-technology-and-data-review} is focused on the literature review of
+    In this section we have introduced our problem domain Rogue, a dungeon crawling game that we will make our program explore with different DQN methods.
+    Section~\ref{sec:literature-technology-and-data-review} is focused on the literature review of
     this project, collating and demonstrating previous work on the subjects that are covered on this project.
-    Section~\ref{sec:design-and-methodology} will explain in detail the methodology we will use and how we will collect
+    Section~\ref{sec:design-and-methodology} will explain in detail the methodology we used and how we will collect
     results from the upcoming experiments.
     Section~\ref{sec:agent-training-and-results} will focus on discussing the results of the experiments.
 
@@ -215,7 +214,7 @@
 
     The purpose of rewards is for the agent to constantly estimate a \emph{value function}.
     This function tells the agent either how profitable being in a certain state and following its policy is, or how profitable taking a certain action then following its policy is.
-    The theory is that the agent should aim to maximise its cumulative reward by tuning its policy in order to achieve this.
+    The theory behind this is that the agent should aim to tune its policy in order to maximise the cumulative reward that is achieved through using this function.
 
     \subsubsection{Q-learning}
     One of the most well-known reinforcement learning algorithms is the Q-learning algorithm~\citep[chap.~6.5]{sutton18}.
@@ -233,7 +232,7 @@
 
     Representing Q-values containing every state-action pairing becomes infeasible in large state spaces such as video
     games, requiring ever expanding tables and computational space needed to store them.
-    Deep Q-learning, a technique by OpenAI~\citep{mnih15}, remedies this by using a convolutional neural network to
+    Deep Q-learning (DQN), a technique by OpenAI~\citep{mnih15}, remedies this by using a convolutional neural network to
     approximate the optimal Q-function \(Q^*(s, a)\) using a convolutional neural network instead of keeping track of
     a table.
 
@@ -250,14 +249,14 @@
     Using a target network decouples selection from evaluation, according to the paper.
 
     This is further improved with the Dueling DQN~\citep{wang16}.
-    Dueling DQN works by splitting the existing DQN network into two streams: a state-value stream and an ``advantage'' stream.
+    Dueling DQN (DDQN) works by splitting the existing DQN network into two streams: a state-value stream and an ``advantage'' stream.
     Advantage is a value describing how advantageous taking a given action would be given a state-value.
     These streams are then joined with an aggregation layer.
     This saves on computation time due to the intuition that it is not necessary to estimate action-values for each action.
 
     And finally, Rainbow DQN~\citep{hessel17}, which combines six different techniques to improve upon the Deep Q-network algorithm.
-    These techniques are Double DQN, Dueling DQN, Prioritised Experience Replay,
-    Multi-step Learning, Distributional RL and Noisy Networks.
+    These techniques are Double DQN, Dueling DQN, Prioritised Experience Replay (PER),
+    Multi-step Learning, Distributional RL and Noisy Networks (NN).
 
     Prioritised Experience Replay~\citep{schaul16} is a technique where experiences in the replay buffer are prioritised in terms of importance and how valuable experiences are to training.
     This way, experiences with higher learning opportunity are sampled more often when training happens, allowing for the agent to learn more efficiently.
@@ -337,10 +336,10 @@
     The objective of the neural network for chizuru-rogue is to take in the observed dungeon state as inputs and return an action that will maximise the expected reward as output as if it were maximising an action-value function.
 
     \subsection{Neural Network}\label{subsec:neural-network}
-    % TODO How are you going to compare Dueling DQN and Rainbow DQN? Is there a metric or multiple metrics? The tradeoff between metrics? Are they standard or ad hoc?
     We aim to evaluate the performance of our agent by implementing and analysing the base Dueling DQN algorithm and two improvements, each applied in turn.
     We will first implement a base Dueling DQN, then we will extend the algorithm with Prioritised Experience Replay and finally extend with Noisy Networks.
     Should time allow we will also introduce Distributional RL and Multi-step Learning in order to create a full Rainbow DQN algorithm.
+
 
     % TODO write about the benefits and drawbacks of both dueling and rainbow
 
@@ -356,7 +355,36 @@
     An OpenAI Gym environment is an environment that is wrapped with OpenAI Gym, providing tools for AI agents to interact with an environment.
     We chose to use an existing environment over creating a new one as it would streamline development of our program, allowing us more time to focus on the AI.
     
-    \subsection{Experiments}\label{subsec:experiments} % TODO experiment discussion
+    \subsection{Experiments}\label{subsec:experiments}
+    We will conduct three separate experiments to test agent performance on Rogue.
+    Our first experiment will use a base Dueling DQN.
+    This will be used as a baseline to compare the other two extensions to the algorithm.
+
+    Our second experiment will be done using a Dueling DQN with Prioritised Experience Replay integrated.
+    Prioritised Experience Replay should make training faster as the extension prioritised experiences in the replay
+    buffer based on how valuable to training it is, making it appear more often during learning.
+
+    Our third experiment will further extend our algorithm with Noisy Networks, introducing some Gaussian noise to the
+    algorithm.
+    This will make it so that exploring previously unknown state spaces will be more efficient.
+
+    All of our experiments will be run for several thousand steps to ensure we can identify any noticeable growths
+    in the agent's performance.
+
+    We will evaluate our agent's performance using three metrics.
+    The first metric we use is the average reward per interval.
+    One interval is 10000 steps.
+    The hope is that as the agent improves, the average reward should increase as the agent gains more reward with an improved policy.
+
+    The second metric we use is the dungeon level.
+    Descending the dungeon is one of the core facets of Rogue, and such we find it important to measure this as the agent descending the dungeon
+    tells us that the agent has achieved a significant improvement, especially if the agent is able to achieve the 21st level where
+    the goal, the Amulet of Yendor, is located.
+
+    The third metric we measure is the loss.
+    The loss algorithm we will use is the Mean Squared Error algorithm.
+    This algorithm calculates the mean of the squares of the difference between expected value and actual value.
+    In our model, this is the difference between the predicted reward and the actual reward. % XXX cite?
 
 
     \subsection{Summary}\label{subsec:summary2}
@@ -379,12 +407,12 @@
     \end{itemize}
 
     \subsection{Dueling DQN}\label{subsec:dueling-dqn}
-    In our first experiment, we ran our Dueling DQN for 13000 steps.
+    In our first experiment, we ran our Dueling DQN for 130000 steps.
     From the results that can be seen in Figure~\ref{fig:ddqn_interval_score}, we were unable to extract a satisfactory result.
     Our model's average reward per interval\footnote{One interval is 10000 steps.} stagnated around 0.02, without increasing except one outlier of Interval 3, with an average reward of 0.049.
     Since the model could not increase its average reward, we set out to improve our model by configuring our hyperparameters and integrating Prioritised Experience Replay~\citet{schaul16} into our Dueling DQN for our second experiment.
     \begin{figure}[H]
-        \caption[DDQN: Average reward per interval.]{Average reward per interval. One interval is 10000 steps.}
+        \caption[DDQN: Average reward per interval.]{Average reward per interval (y-axis). One interval (x-axis) is 10000 steps.}
         \centering
         \includegraphics[scale=0.5]{interval_score_ddqn}
         \label{fig:ddqn_interval_score}
@@ -401,17 +429,23 @@
         \label{fig:ddqn_per_interval_score}
     \end{figure}
 
-
-
     \subsection{Dueling DQN with Prioritised Experience Replay and Noisy Networks}\label{subsec:dueling-dqn-with-prioritised-experience-replay-and-noisy-networks} % TODO
     In our third experiment we integrated Noisy Networks to our network architecture.
     We did this by utilising the Keras layer \texttt{GaussianNoise()} to add a small amount of Gaussian Noise after our convolutional layers as can be seen in Appendix~\ref{lst:ddqnnoisy}.
+
+    As shown in Figure~\ref{fig:ddqn_noisy_interval_score}, our model was unable to improve in any significant way.
+    Since we were unable to observe a noticeable improvement by extending our DDQN algorithm, we theorise that
+    there are other issues that are in our implementation.
     \begin{figure}[H]
         \caption[DDQN/PER/NN: Average reward per interval.]{Average reward per interval. One interval is 10000 steps.}
         \centering
         \includegraphics[scale=0.5]{interval_score_ddqn_noisy}
         \label{fig:ddqn_noisy_interval_score}
     \end{figure}
+
+    \subsection{Discussion} % TODO
+
+    % Base dueling DQN was the most performant
 
     \section{Conclusion}\label{sec:conclusion}
     In this paper we have set out to improve upon to~\citet{asperti18} and ~\citet{kanagawa19}`s tests by utilising extensions to the DQN algorithm
@@ -424,29 +458,32 @@
         \item Deployment of our neural network to run experiments
     \end{itemize}
 
-    % TODO go into detail about the actual achievements
 
     However, our goal was to achieve a successful improvement upon previous literature, but our models did not achieve satisfactory results.
     The average reward per interval that our models attained did not increase as the model learnt.
     This could be due to either more training being required, or our model needing improvement, as we describe in depth in Section~\ref{subsec:future-work}.
 
-    Our main challenge was creation of the neural network.
+    % TODO Elaborate on why you think you did not get the results you wanted
 
+    Our main challenge was the creation of the neural network.
+    As we had limited experience working with deep neural networks before undertaking this project, much of our time was spent
+    looking up how neural networks were designed, implemented in code and deployed.
 
     Another challenge we faced was tuning of hyperparameters.
     We experimented with several configurations of hyperparameters, and the hyperparameters we used for our tests are noted in Section~\ref{subsec:hyperparameters}.
     Since we were unsuccessful in obtaining satisfactory results, we must improve upon how we tune our hyperparameters as described in Section~\ref{subsec:future-work}.
 
-    Our work provides a framework to...
+    % TODO Write about memory management and how the program crashed
 
-    This project was good to develop...
 
-    % Explain where chizuru performed well, where it screwed up, and the most important aspect about it
+    Our work provides a framework to\ldots
 
-    % Talk about the neural network here
-    
+    This project was good to develop\ldots
+
+    % TODO Explain where chizuru performed well, where it screwed up, and the most important aspect about it
+
+
     \subsection{Future work}\label{subsec:future-work}
-    As we were unsuccessful in achieving a satisfactory result, the future work for this project aims to rectify this.
     Looking at what we have accomplished and read, we have identified four main areas of improvement for future work.
 
     The first is memory management of our program.
@@ -464,9 +501,13 @@
 
     Secondly is the reward function.
     The reward function currently provides a reward of 0 for moving in the map without collecting gold or descending stairs.
-    In
+    Using a negative reward for inconsequential movement could rectify this as it would disincentivise the agent to take
+    superfluous actions and focus properly on achieving the goal of descending the stairs.
 
-    Network architecture
+    The third is our network architecture.
+    In future work, allowing more time to develop the neural network and test for errors should be given.
+    Additionally, to get better results, a Rainbow DQN or a customised neural network should be implemented so that
+    training is processed faster.
 
     The fourth is hyperparameter tweaking.
     As we did not obtain satisfactory results for our neural network, in future work more research on what hyperparameters
@@ -475,8 +516,10 @@
 
     \subsection{Reflection}\label{subsec:reflection}
 
-    % Write some bollocks on how RL works well on video games and how this can lead to real-world developments with this technology. End off on a positive note!
-
+    % TODO Write some bollocks on how RL works well on video games and how this can lead to real-world developments with this technology. End off on a positive note!
+    % What did you like and learn?
+    % What hurdles did you have to overcome?
+    % Challenges you faced?
 
     %%%%% Everything after here is not counted in the word count. %%%%%
 
@@ -539,7 +582,6 @@ TARGET_UPDATE_FREQUENCY = 750
 PRIORITY_SCALE = 0.7
     \end{lstlisting}
 
-    \subsubsection{Dueling DQN/Noisy Networks}
 
     \subsection{Network Architecture}\label{subsec:network-architecture}
     \subsubsection{Dueling DQN}
