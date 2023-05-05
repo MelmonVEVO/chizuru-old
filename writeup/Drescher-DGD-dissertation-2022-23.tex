@@ -79,7 +79,7 @@
         Rogue offers a unique problem to solve, requiring a player to solve partially observable, randomly generated levels.
 
         \noindent chizuru-rouge interfaces with a program called Rogue-gym, a program that accurately mimics the gameplay of Rogue and
-        the agent utilises a Rainbow Deep Q-network to explore the dungeon, collect gold and reach the goal of collecting the Amulet of Yendor. % customised neural network that involves an LSTM for long-term and short-term memory to explore levels in Rogue
+        the agent utilises a Rainbow Deep Q-network to explore the dungeon, collect gold, and reach the goal of collecting the Amulet of Yendor. % customised neural network that involves an LSTM for long-term and short-term memory to explore levels in Rogue
 
         \noindent TensorFlow will be used as a framework to implement the reinforcement learning agent.
         TensorFlow is a Python library that provides tools to streamline development of deep learning models.
@@ -111,7 +111,7 @@
     Rogue is a 1980 computer game that belongs to a genre called ``roguelikes''.
     Roguelikes are characterised by challenging, turn based dungeon crawling gameplay, procedurally generated levels and permanent character death.
     They are inspired by Rogue.
-    This genre of game offers a fascinating domain to apply reinforcement learning methods to due to the amount of strategies and gameplay styles that roguelike games allow.
+    This genre of game offers a fascinating domain to apply reinforcement learning methods due to the amount of strategies and gameplay styles that roguelike games allow.
     In these games, turns often resolve immediately, allowing for efficient training.
 
     The aim of chizuru-rogue is to apply deep reinforcement learning methods for an agent to learn and survive within Rogue.
@@ -125,7 +125,7 @@
     \subsection{Rogue - the game}\label{subsec:rogue}
     \subsubsection{Objective}\label{subsubsec:objective}
     In Rogue, the player's main objective is to get a high score by descending the Dungeon of Doom to slay monsters, collect gold coins, retrieve the Amulet of Yendor and escape the dungeon with it alive.
-    The game is turn based, which means the player can spend as long as they want thinking their next move before the game processes the environment.
+    The game is turn based, which means the player can spend as long as they want thinking about their next move before the game processes the environment.
     Figure~\ref{fig:rogsc} depicts an example screenshot of the game.
 
     \begin{figure}[ht]
@@ -171,8 +171,8 @@
     If the player's HP falls to 0, the player dies and the game ends.
 
     Unlike many other role-playing games of the time, Rogue uses character permanent death as a mechanic, providing the player with
-    the unique challenge of surviving till the end, as the player can not load a previous save if they are defeated.
-    Therefore, the player has to think through their future moves much more rigorously;
+    the unique challenge of surviving till the end, as the player cannot load a previous save if they are defeated.
+    Therefore, the player must think through their future moves much more rigorously;
     the player's decisions have much more weight to them as a wrong move could mean game over.
     \emph{Michael Toy}, Rogue's co-creator, emphasised on the topic of permanent death in Roguelike Celebration 2016~\citep{gamasutra16} by saying `We were trying to make it more immersive by making things matter \ldots'.
 
@@ -180,7 +180,7 @@
     The primary objectives of this project are as follows:
     \begin{itemize}
         \item Create a program that uses artificial intelligence to play Rogue.
-        This involves designing, developing and deploying the program to a GPU cloud for training an agent.
+        This involves designing, developing, and deploying the program to a GPU cloud for training an agent.
         \item Improve upon existing work for playing Rogue.
         As we will explain in Section~\ref{subsec:exploring-rogue}, existing literature has only applied the standard
         DQN\footnote{Deep Q-network: using neural networks to approximate Q-learning. See Section~\ref{subsec:deep-learning}.} to Rogue.
@@ -199,8 +199,8 @@
 
     \section{Literature, Technology and Data Review}\label{sec:literature-technology-and-data-review}
 
-    \subsection{Fundamentals of RL}\label{subsec:fundamentals}
-    The fundamentals of reinforcement learning and many fundamental algorithms for solving sequential decision problems is explained in detail by~\citet{sutton18}.
+    \subsection{Fundamentals of Reinforcement Learning (RL)}\label{subsec:fundamentals}
+    The fundamentals of reinforcement learning and many fundamental algorithms for solving sequential decision problems are explained in detail by~\citet{sutton18}.
     The core idea behind reinforcement learning algorithms is that an agent performs \emph{actions} on an \emph{environment} by deriving what it should do from its \emph{policy}, which is a mapping from states to actions.
     This loop is visualised in Figure~\ref{fig:rlgraph}.
     Once the agent performs an action, it receives the new game state as well as a \emph{reward} signal, telling the agent how good its choice was.
@@ -244,7 +244,7 @@
     One of the first improvements to the DQN algorithm is the Double DQN~\citep{hasselt15}, which improves on the original DQN by using a current network for selecting actions
     and then training a ``target network'' to calculate the target Q-value of said action.
     This improves on the original DQN by solving an issue the original DQN had that the Double DQN paper explains in detail,
-    where the original DQN suffered from ``substantial overestimations'' when playing Atari games, leading to poorer derived policies due to the fact that
+    where the original DQN suffered from ``substantial overestimations'' when playing Atari games, leading to poorer derived policies since
     DQN (and standard Q-learning) uses the save max value for selecting and evaluating an action.
     Using a target network decouples selection from evaluation, according to the paper.
 
@@ -263,7 +263,7 @@
     Priorities of experiences are adjusted over time so that the agent does not overfit with certain experiences.
 
     Multistep Learning~\citep[chap.~7.1]{sutton18} is a technique in reinforcement learning that uses sequences of actions and rewards rather than just an individual transition for learning.
-    This is in contrast to traditional Q-learning which only takes into account an individual transition for training and calculating action values (a Markov Decision Process framework).
+    This contrasts with traditional Q-learning which only takes into account an individual transition for training and calculating action values (a Markov Decision Process framework).
 
     Distributional reinforcement learning~\citep{bellemare17} differs from traditional RL by evaluating a distribution of a random return, rather than a single value for expected returns.
     The goal is to estimate the probability distribution of an expected reward.
@@ -329,16 +329,17 @@
 
     \begin{itemize}
         \item Monsters are disabled, so that combat is not part of the problem.
-        \item The amount of actions available to the agent is reduced to the movement actions, search and wait.
-        \item Initially we disabled hunger, so that the agent only needs to focus on descending the dungeon.
+        \item The number of actions available to the agent is reduced to the movement actions, search and wait.
     \end{itemize}
 
     The objective of the neural network for chizuru-rogue is to take in the observed dungeon state as inputs and return an action that will maximise the expected reward as output as if it were maximising an action-value function.
 
+    The agent's main goal is to explore the dungeon to collect gold, and find the exit stairs to descend the dungeon.
+
     \subsection{Neural Network}\label{subsec:neural-network}
     We aim to evaluate the performance of our agent by implementing and analysing the base Dueling DQN algorithm and two improvements, each applied in turn.
     We will first implement a base Dueling DQN, then we will extend the algorithm with Prioritised Experience Replay and finally extend with Noisy Networks.
-    Should time allow we will also introduce Distributional RL and Multi-step Learning in order to create a full Rainbow DQN algorithm.
+    Should time allow we will also introduce Distributional RL and Multi-step Learning to create a full Rainbow DQN algorithm.
 
     \subsection{Agent Implementation}\label{subsec:implementation}
     The agent will be implemented in Python, which is one of the most popular languages used to model neural networks due to its many AI-related libraries that are available, including TensorFlow, which is what we use.
@@ -353,25 +354,25 @@
     We chose to use an existing environment over creating a new one as it would streamline development of our program, allowing us more time to focus on the AI.
     
     \subsection{Experiments}\label{subsec:experiments}
-    We will conduct three separate experiments to test agent performance on Rogue.
-    Our first experiment will use a base Dueling DQN.
+    We will conduct three separate experiments to test the agent's performance in Rogue.
+    The first experiment will use a base Dueling DQN (DDQN).
     This will be used as a baseline to compare the other two extensions to the algorithm.
 
-    Our second experiment will be done using a Dueling DQN with Prioritised Experience Replay integrated.
-    Prioritised Experience Replay should make training faster as the extension prioritised experiences in the replay
-    buffer based on how valuable to training it is, making it appear more often during learning.
+    The second experiment will be done using a Dueling DQN with Prioritised Experience Replay (PER) integrated.
+    This should make training the agent faster as the extension prioritised experiences in the replay
+    buffer are based on how much the agent expects to learn from the experience, making it appear more often during learning.
 
-    Our third experiment will further extend our algorithm with Noisy Networks, introducing some Gaussian noise to the
+    The third experiment will further extend the algorithm with Noisy Networks (NN), introducing some Gaussian noise to the
     algorithm.
-    This will make it so that exploring previously unknown state spaces will be more efficient.
+    This will ensure that exploring previously unknown state spaces will become more efficient.
 
-    All of our experiments will be run for several thousand steps to ensure we can identify any noticeable growths
+    All our experiments will be run for many thousand steps to ensure we can identify any noticeable growths
     in the agent's performance.
 
     We will evaluate our agent's performance using two metrics.
     The first metric we use is the average reward per interval.
     One interval is 10000 steps.
-    The hope is that as the agent improves, the average reward should increase as the agent gains more reward with an improved policy.
+    The hope is that as the agent learns, the average reward increases over time due to the agent improving its policy.
 
     The second metric we use is the dungeon level.
     Descending the dungeon is one of the core facets of Rogue, and such we find it important to measure this as the agent descending the dungeon
@@ -379,16 +380,21 @@
     the goal, the Amulet of Yendor, is located.
 
     \subsection{Summary}\label{subsec:summary2}
-    In this section we have outlined the algorithms and techniques we will use to create our agent, what we will use to implement them and how we will conduct our experiments.
-    We have outlined our reasoning as to why we will use a Deep Q-network, mainly because it is a well-known algorithm that is proven to work well on a variety of game environments.
-    The algorithms we will use are improvements to the base Deep Q-network algorithm: Dueling DQN, DDQN with Prioritised Experience Replay and DDQN with PER and Noisy Networks.
-    If time allows, we will implement Distributional RL to introduce a full Rainbow DQN to the environment.
-    We will compare these algorithms to see how they do when learning Rogue.
+    In this section we have outlined the algorithms and techniques we will use to create our agent, what methods we will use to implement them and how we will conduct our experiments.
+    We have outlined our reasoning as to why we will use a Deep Q-network (DQN), mainly because it is a well-known algorithm that is proven to work well on a variety of game environments.
+    Furthermore, the algorithms we will use are improvements to the base Deep Q-network algorithm: Dueling DQN, DDQN with PER and DDQN with PER and Noisy Networks.
+    If time allows, we will implement Distributional RL and Multistep learning to introduce a full Rainbow DQN to the environment.
+    We will compare these algorithms based on two metrics: reward and dungeon level achieved, to evaluate how they improve over time when learning Rogue.
 
     \section{Agent Training and Results}\label{sec:agent-training-and-results}
-    The agent was trained and evaluated on an Nvidia GeForce RTX 2080 graphics card using CUDA.
+    The agent was trained and evaluated on an Nvidia GeForce RTX 2080 graphics card using CUDA\footnote{An interface provided by Nvidia allowing programs to use GPU power for computation.}.
 
     Our training code was adapted from the work of~\citet{sebtheiler}.
+
+    In each episode of training, the agent is placed in a new run of Rogue where they are tasked with exploring the dungeon, collecting gold and locating the exit stairs.
+    A reward signal is provided when the agent achieves something of note.
+    When the agent collects gold, the agent receives a reward equal to the amount of gold collected.
+    When the agent descends stairs, the agent receives a reward of 100.
 
     During our training of the agent, we measured the agent's performance with the following criteria after every run:
 
@@ -403,7 +409,7 @@
     Our model's average reward per interval\footnote{One interval is 10000 steps.} stagnated around 0.02, without increasing except one outlier of Interval 3, with an average reward of 0.049.
     Since the model could not increase its average reward, we set out to improve our model by configuring our hyperparameters and integrating Prioritised Experience Replay~\citet{schaul16} into our Dueling DQN for our second experiment.
     \begin{figure}[H]
-        \caption[DDQN: Average reward per interval.]{Average reward per interval (y-axis). One interval (x-axis) is 10000 steps.}
+        \caption[DDQN: Average reward per interval.]{DDQN: Average reward per interval (y-axis). One interval (x-axis) is 10000 steps.}
         \centering
         \includegraphics[scale=0.5]{interval_score_ddqn}
         \label{fig:ddqn_interval_score}
@@ -414,7 +420,7 @@
     As shown in Figure~\ref{fig:ddqn_per_interval_score}, we were also unable to extract a satisfactory result, with the average reward per interval stagnating over the entire training period.
 
     \begin{figure}[H]
-        \caption[DDQN/PER: Average reward per interval.]{Average reward per interval. One interval is 10000 steps.}
+        \caption[DDQN/PER: Average reward per interval.]{DDQN/PER: Average reward per interval. One interval is 10000 steps.}
         \centering
         \includegraphics[scale=0.5]{interval_score_ddqn_per}
         \label{fig:ddqn_per_interval_score}
@@ -426,31 +432,36 @@
 
     As shown in Figure~\ref{fig:ddqn_noisy_interval_score}, our model was unable to improve in any significant way.
     Since we were unable to observe a noticeable improvement by extending our DDQN algorithm, we theorise that
-    there are other issues that are in our implementation.
+    there are other issues that are affecting our implementation negatively.
     \begin{figure}[H]
-        \caption[DDQN/PER/NN: Average reward per interval.]{Average reward per interval. One interval is 10000 steps.}
+        \caption[DDQN/PER/NN: Average reward per interval.]{DDQN/PER/NN: Average reward per interval. One interval is 10000 steps.}
         \centering
         \includegraphics[scale=0.5]{interval_score_ddqn_noisy}
         \label{fig:ddqn_noisy_interval_score}
     \end{figure}
 
     \subsection{Discussion}\label{subsec:discussion}
-    As we can observe through the graphs, our base Dueling DQN algorithm was the most performant with an average reward of
-    0.02, in comparison to DDQN/PER with an average of 0.01 and DDQN/PER/NN with an average of 0.008.
+    Looking at the final score the agent achieved, we can observe that our base Dueling DQN algorithm was the most performant with an average reward of
+    roughly 0.02, in comparison to DDQN/PER with an average of roughly 0.01 and DDQN/PER/NN with an average of roughly 0.006.
     However, our base Dueling DQN algorithm was run for less time than the other algorithms, so more testing with the
     base Dueling DQN may need to be done for a fair comparison.
+    This was because of memory management issues that caused the base DDQN experiment to terminate earlier than the others.
+    We explain in detail our memory management issues further in this section.
 
-    All three of our algorithms were unable to achieve results that we were satisfied with.
-    The average reward per interval that our models attained did not increase as the model learnt.
-    This could be due to either more training being required, or our model needing improvement, as we describe in depth in Section~\ref{subsec:future-work}.
+    All three of our algorithms were unable to achieve satisfactory results.
+    We expected the model to learn and the average reward per interval to increase overtime with increasing step count, but this was not achieved.
+    We believe that this current outcome could be due to two main factors.
+    Either more training is required for the agent to improve over time, or our model needs improvement, which we will discuss in depth in Section~\ref{subsec:future-work}.
 
-    All three of our algorithms were unable to progress past the first dungeon level.
-    This is indicative of the agent failing to learn how to locate the exit stairs and descend the dungeon.
-    We may have set the exit stairs reward too low at 100, increasing this reward could have made the agent learn how
+    Measuring the agent's success through our other criteria, entering the deepest dungeon level possible, we found that
+    all three of our algorithms were unable to progress past the first dungeon level.
+    We believe that this is indicative of the agent failing to learn how to locate the exit stairs and descend the dungeon.
+    We may have set the exit stairs reward too low at 100, and increasing this reward could have improved the agent's ability to learn how
     to descend the stairs.
 
-    The memory usage of the program increases gradually, until the memory on the system runs out and the program crashes.
-    We ran the Fil memory profiler\footnote{\url{https://pythonspeed.com/fil/}} on our program and discovered that predicting an action to take for our agent was taking up the bulk of memory as can be seen in Figure~\ref{fig:fil}.
+    Furthermore, one of the main issues we ran into was that
+    the memory usage of the program increased gradually, until the memory on the system ran out and the program crashed.
+    We ran the Fil memory profiler\footnote{\url{https://pythonspeed.com/fil/}} on our program and discovered that predicting an action to take for our agent was taking up the bulk of the memory which can be seen in Figure~\ref{fig:fil}.
 
     \begin{figure}[h]
         \caption[Fil Profiler result for DDQN with PER.]{Fil memory profiler result for our DDQN with PER. Larger bars with a deeper shade of red means the code line took up more memory.}
@@ -459,8 +470,9 @@
         \label{fig:fil}
     \end{figure}
 
-    We were unable to introduce a fix to the memory problem that action prediction had in the timeframe of the project,
-    this will be a core issue that would need to be addressed in future work.
+    We believe that this memory issue was one of the key issues limiting the effectiveness of the agent in this project.
+    We were unable to introduce a fix to this memory problem in the timeframe of this project,
+    but this will be a core issue that we would like to address in future work.
 
     \section{Conclusion}\label{sec:conclusion}
     In this paper we have set out to improve upon to~\citet{asperti18} and ~\citet{kanagawa19}`s tests by utilising extensions to the DQN algorithm
@@ -469,36 +481,37 @@
 
     We have achieved the following in this article:
     \begin{itemize}
-        \item Implementation of a Dueling DQN as well as two different improvements for learning the game Rogue
-        \item Deployment of our neural network to run experiments
+        \item Implementation of a Dueling DQN as well as two different improvements for learning the game Rogue.
+        \item Deployment of our neural network to run experiments.
     \end{itemize}
 
     However, our goal was to achieve a successful improvement upon previous literature, but our models did not achieve satisfactory results.
-    This may have been for a number of reasons.
+    This may have been for several reasons.
     One reason could be because we trained our agent for too little time.
     Had we trained our agent for longer, we could have seen a noticeable improvement.
 
-    Another reason this could have been is because of errors in our implementation that we did not catch during development.
-    As we were working within a limited timeframe, we did not have much time to spend analysing our code and catching
+    Another reason could have been because of errors in our implementation that we did not catch during development.
+    As we were working within a limited timeframe, we did not have enough time to spend analysing our code and catching
     errors during development.
-    As such, there may have been some errors that were left in that impacted agent training.
+    As such, there may have been some errors that were left in that impacted the agent's training and capabilities.
 
     Our main challenge during development was the creation of the neural network.
     As we had limited experience working with deep neural networks before undertaking this project, much of our time was spent
-    looking up how neural networks were designed, implemented in code and deployed.
+    learning how neural networks were designed, implemented in code and deployed.
 
-    Another challenge we faced was tuning of hyperparameters.
+    Another challenge we faced was the tuning of hyperparameters.
     We experimented with several configurations of hyperparameters, and the hyperparameters we used for our tests are noted in Section~\ref{subsec:hyperparameters}.
     Since we were unsuccessful in obtaining satisfactory results, we must improve upon how we tune our hyperparameters as described in Section~\ref{subsec:future-work}.
 
-    Overall, this project was good to develop our experience in working with deep learning and reinforcement learning
-    using TensorFlow, which we can use for future work to allow us to write more performant code and better deep learning agents.
+    Overall, this project was a great learning experience, and we enjoyed developing our expertise with deep learning and reinforcement learning
+    using TensorFlow.
+    We can now use this for future work, and it certainly will allow us to write more performant code and develop improved deep learning agents.
 
     \subsection{Future work}\label{subsec:future-work}
     Looking at what we have accomplished and read, we have identified four main areas of improvement for future work.
 
     The first is memory management of our program.
-    During training of our agent, we ran into an issue where our program was gradually using up more and more memory on the system.
+    As we described earlier, during training of our agent, we ran into an issue where our program was gradually using up more and more memory on the system.
     This means that training of our agent would have to be interrupted periodically so that it would not impact other processes on the system, decreasing the efficiency of training.
     In future work investigation into why these memory issues occur should be performed and how to mitigate them.
 
@@ -513,16 +526,23 @@
     training is processed faster.
 
     The fourth is hyperparameter tweaking.
-    As we did not obtain satisfactory results for our neural network, in future work more research on what hyperparameters
-    are used in what configuration of neural networks and environments are used should be conducted.
-    In addition, more experiments on how different configurations of hyperparameters should also be performed.
+    As we did not obtain satisfactory results for our neural network, in future work more combinations of hyperparameters
+    should be tested to observe which set of hyperparameters produce optimal training efficiency.
 
     \subsection{Reflection}\label{subsec:reflection}
-    Overall, we feel that the project provided us with a valuable learning experience.
-    Coming from limited experience with deep reinforcement learning, we felt that we have learnt many things about
-    how deep RL works in-depth and how deep RL agents are implemented and trained.
-    Looking back, we would have liked to focus more on investigating why our agent did not provide the results we were
-    expecting, however these results have provided us with experience that we can use to train better agents in future works.
+    We feel that the project provided us with a valuable learning experience and expansion of our horizon.
+    We were eager to look into deep reinforcement learning as this is an exciting area in machine learning that we were fascinated by.
+
+    Before starting this project we had very limited experience with deep reinforcement learning, and realised
+    quickly that this fascinating field is massive and is hard to capture all the required knowledge within a few months.
+
+    However, digging into the material and applying the gained knowledge into a real coding project provided us with additional valuable
+    learning experience.
+    We especially enjoyed researching different deep learning techniques that are applied to games, investigating how they work and the steep learning curve achieved.
+
+    Overall, we felt that we achieved a lot within the given timeframe, and we are content with what we learnt, especially
+    the knowledge and applied experience we gained.
+    We look forward to investigating the areas of improvement that we identified in the future and use the newly gained knowledge to create and train superior agents.
 
     % What did you like and learn?
     % What hurdles did you have to overcome?
@@ -530,7 +550,7 @@
 
     %%%%% Everything after here is not counted in the word count. %%%%%
 
-    \textbf{Total word count: xxx}
+    \textbf{Total word count: 5100}
     \medskip
 
     \bibliographystyle{agsm}
