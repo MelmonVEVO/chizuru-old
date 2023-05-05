@@ -340,9 +340,6 @@
     We will first implement a base Dueling DQN, then we will extend the algorithm with Prioritised Experience Replay and finally extend with Noisy Networks.
     Should time allow we will also introduce Distributional RL and Multi-step Learning in order to create a full Rainbow DQN algorithm.
 
-
-    % TODO write about the benefits and drawbacks of both dueling and rainbow
-
     \subsection{Agent Implementation}\label{subsec:implementation}
     The agent will be implemented in Python, which is one of the most popular languages used to model neural networks due to its many AI-related libraries that are available, including TensorFlow, which is what we use.
     TensorFlow provides tools for working with linear algebra and is widely used in machine learning.
@@ -371,7 +368,7 @@
     All of our experiments will be run for several thousand steps to ensure we can identify any noticeable growths
     in the agent's performance.
 
-    We will evaluate our agent's performance using three metrics.
+    We will evaluate our agent's performance using two metrics.
     The first metric we use is the average reward per interval.
     One interval is 10000 steps.
     The hope is that as the agent improves, the average reward should increase as the agent gains more reward with an improved policy.
@@ -380,12 +377,6 @@
     Descending the dungeon is one of the core facets of Rogue, and such we find it important to measure this as the agent descending the dungeon
     tells us that the agent has achieved a significant improvement, especially if the agent is able to achieve the 21st level where
     the goal, the Amulet of Yendor, is located.
-
-    The third metric we measure is the loss.
-    The loss algorithm we will use is the Mean Squared Error algorithm.
-    This algorithm calculates the mean of the squares of the difference between expected value and actual value.
-    In our model, this is the difference between the predicted reward and the actual reward. % XXX cite?
-
 
     \subsection{Summary}\label{subsec:summary2}
     In this section we have outlined the algorithms and techniques we will use to create our agent, what we will use to implement them and how we will conduct our experiments.
@@ -429,7 +420,7 @@
         \label{fig:ddqn_per_interval_score}
     \end{figure}
 
-    \subsection{Dueling DQN with Prioritised Experience Replay and Noisy Networks}\label{subsec:dueling-dqn-with-prioritised-experience-replay-and-noisy-networks} % TODO
+    \subsection{Dueling DQN with Prioritised Experience Replay and Noisy Networks}\label{subsec:dueling-dqn-with-prioritised-experience-replay-and-noisy-networks}
     In our third experiment we integrated Noisy Networks to our network architecture.
     We did this by utilising the Keras layer \texttt{GaussianNoise()} to add a small amount of Gaussian Noise after our convolutional layers as can be seen in Appendix~\ref{lst:ddqnnoisy}.
 
@@ -443,9 +434,33 @@
         \label{fig:ddqn_noisy_interval_score}
     \end{figure}
 
-    \subsection{Discussion} % TODO
+    \subsection{Discussion}\label{subsec:discussion}
+    As we can observe through the graphs, our base Dueling DQN algorithm was the most performant with an average reward of
+    0.02, in comparison to DDQN/PER with an average of 0.01 and DDQN/PER/NN with an average of 0.008.
+    However, our base Dueling DQN algorithm was run for less time than the other algorithms, so more testing with the
+    base Dueling DQN may need to be done for a fair comparison.
 
-    % Base dueling DQN was the most performant
+    All three of our algorithms were unable to achieve results that we were satisfied with.
+    The average reward per interval that our models attained did not increase as the model learnt.
+    This could be due to either more training being required, or our model needing improvement, as we describe in depth in Section~\ref{subsec:future-work}.
+
+    All three of our algorithms were unable to progress past the first dungeon level.
+    This is indicative of the agent failing to learn how to locate the exit stairs and descend the dungeon.
+    We may have set the exit stairs reward too low at 100, increasing this reward could have made the agent learn how
+    to descend the stairs.
+
+    The memory usage of the program increases gradually, until the memory on the system runs out and the program crashes.
+    We ran the Fil memory profiler\footnote{\url{https://pythonspeed.com/fil/}} on our program and discovered that predicting an action to take for our agent was taking up the bulk of memory as can be seen in Figure~\ref{fig:fil}.
+
+    \begin{figure}[h]
+        \caption[Fil Profiler result for DDQN with PER.]{Fil memory profiler result for our DDQN with PER. Larger bars with a deeper shade of red means the code line took up more memory.}
+        \centering
+        \includegraphics[scale=0.3]{fil}
+        \label{fig:fil}
+    \end{figure}
+
+    We were unable to introduce a fix to the memory problem that action prediction had in the timeframe of the project,
+    this will be a core issue that would need to be addressed in future work.
 
     \section{Conclusion}\label{sec:conclusion}
     In this paper we have set out to improve upon to~\citet{asperti18} and ~\citet{kanagawa19}`s tests by utilising extensions to the DQN algorithm
@@ -458,14 +473,17 @@
         \item Deployment of our neural network to run experiments
     \end{itemize}
 
-
     However, our goal was to achieve a successful improvement upon previous literature, but our models did not achieve satisfactory results.
-    The average reward per interval that our models attained did not increase as the model learnt.
-    This could be due to either more training being required, or our model needing improvement, as we describe in depth in Section~\ref{subsec:future-work}.
+    This may have been for a number of reasons.
+    One reason could be because we trained our agent for too little time.
+    Had we trained our agent for longer, we could have seen a noticeable improvement.
 
-    % TODO Elaborate on why you think you did not get the results you wanted
+    Another reason this could have been is because of errors in our implementation that we did not catch during development.
+    As we were working within a limited timeframe, we did not have much time to spend analysing our code and catching
+    errors during development.
+    As such, there may have been some errors that were left in that impacted agent training.
 
-    Our main challenge was the creation of the neural network.
+    Our main challenge during development was the creation of the neural network.
     As we had limited experience working with deep neural networks before undertaking this project, much of our time was spent
     looking up how neural networks were designed, implemented in code and deployed.
 
@@ -473,15 +491,8 @@
     We experimented with several configurations of hyperparameters, and the hyperparameters we used for our tests are noted in Section~\ref{subsec:hyperparameters}.
     Since we were unsuccessful in obtaining satisfactory results, we must improve upon how we tune our hyperparameters as described in Section~\ref{subsec:future-work}.
 
-    % TODO Write about memory management and how the program crashed
-
-
-    Our work provides a framework to\ldots
-
-    This project was good to develop\ldots
-
-    % TODO Explain where chizuru performed well, where it screwed up, and the most important aspect about it
-
+    Overall, this project was good to develop our experience in working with deep learning and reinforcement learning
+    using TensorFlow, which we can use for future work to allow us to write more performant code and better deep learning agents.
 
     \subsection{Future work}\label{subsec:future-work}
     Looking at what we have accomplished and read, we have identified four main areas of improvement for future work.
@@ -489,15 +500,7 @@
     The first is memory management of our program.
     During training of our agent, we ran into an issue where our program was gradually using up more and more memory on the system.
     This means that training of our agent would have to be interrupted periodically so that it would not impact other processes on the system, decreasing the efficiency of training.
-    We ran the Fil memory profiler\footnote{\url{https://pythonspeed.com/fil/}} on our program and discovered that predicting an action to take for our agent was taking up the bulk of memory as can be seen in Figure~\ref{fig:fil}.
     In future work investigation into why these memory issues occur should be performed and how to mitigate them.
-
-    \begin{figure}[h]
-        \caption[Fil Profiler result for DDQN with PER.]{Fil memory profiler result for our DDQN with PER. Larger bars with a deeper shade of red means the code line took up more memory.}
-        \centering
-        \includegraphics[scale=0.3]{fil}
-        \label{fig:fil}
-    \end{figure}
 
     Secondly is the reward function.
     The reward function currently provides a reward of 0 for moving in the map without collecting gold or descending stairs.
@@ -515,8 +518,12 @@
     In addition, more experiments on how different configurations of hyperparameters should also be performed.
 
     \subsection{Reflection}\label{subsec:reflection}
+    Overall, we feel that the project provided us with a valuable learning experience.
+    Coming from limited experience with deep reinforcement learning, we felt that we have learnt many things about
+    how deep RL works in-depth and how deep RL agents are implemented and trained.
+    Looking back, we would have liked to focus more on investigating why our agent did not provide the results we were
+    expecting, however these results have provided us with experience that we can use to train better agents in future works.
 
-    % TODO Write some bollocks on how RL works well on video games and how this can lead to real-world developments with this technology. End off on a positive note!
     % What did you like and learn?
     % What hurdles did you have to overcome?
     % Challenges you faced?
@@ -549,7 +556,7 @@
     \end{itemize}
 
     \subsection{Hyperparameters}\label{subsec:hyperparameters}
-    \subsubsection{Dueling DQN - First Run}
+    \subsubsection{Dueling DQN}
     \begin{lstlisting}[label={lst:ddqnhyperparameters}]
 GAMMA = 0.99
 NUM_ITERATIONS = 20000
@@ -615,7 +622,7 @@ final_model.compile(
 return final_model
     \end{lstlisting}
 
-    \subsubsection{Dueling DQN/Noisy Networks}
+    \subsubsection{Dueling DQN/PER/Noisy Networks}
     \begin{lstlisting}[label={lst:ddqnnoisy}]
 net_input = tf.keras.Input(shape=(h, w, HISTORY_LEN))
 
@@ -649,5 +656,20 @@ final_model.compile(
 return final_model
     \end{lstlisting}
 
+    \subsection{Losses}\label{subsec:losses}
+    \subsubsection{Dueling DQN/Prioritised Experience Replay}
+    \begin{figure}[H]
+        \caption[Losses for Dueling DQN with PER.]{Average loss (y-axis) every 10 steps (x-axis).}
+        \centering
+        \includegraphics[scale=0.5]{losses_ddqn_per}
+        \label{fig:losses_ddqn_per}
+    \end{figure}
+    \subsubsection{Dueling DQN/PER/Noisy Networks}
+    \begin{figure}[H]
+        \caption[Losses for Dueling DQN with PER and NN.]{Average loss (y-axis) every 10 steps (x-axis).}
+        \centering
+        \includegraphics[scale=0.5]{losses_ddqn_noisy}
+        \label{fig:losses_ddqn_noisy}
+    \end{figure}
 
 \end{document}
